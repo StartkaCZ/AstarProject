@@ -102,10 +102,13 @@ void Game::SetupLevel(int width, int height)
 
 	int x = 0;
 	int y = 0;
+
 	for (int i = 0; i < _maxRowCol; i++)
 	{
 		for (int j = 0; j < _maxRowCol; j++)
 		{
+			bool isPassible = true;
+
 			setupRectangle.x = x;
 			setupRectangle.y = y;
 			setupRectangle.h = tileSize;
@@ -113,21 +116,27 @@ void Game::SetupLevel(int width, int height)
 
 			if (i == 0 || j == 0)
 			{
-				setupColour.g = 100;
-				setupColour.r = 100;
-				setupColour.b = 100;
-				setupColour.a = 255;
+				isPassible = false;
 			}
 			else
 			{
-				setupColour.g = 0;
-				setupColour.r = 0;
-				setupColour.b = 0;
-				setupColour.a = 255;
+				//tiles available = row/col max tiles - (edge + edge) - (spacing for player/NPC area)
+				int tilesAvailble = _maxRowCol - 2 - 10;
+				int spacing = tilesAvailble / maxWalls;
+				int offset = (1 + 5) * 0.5f;
+
+				for (int k = 1; k <= maxWalls; k++)
+				{
+					if (i == offset + (spacing * k))
+					{
+
+					}
+				}
 			}
+			
 
 			_tiles[i].push_back(new Tile());
-			_tiles[i][j]->Initialize(setupRectangle, setupColour);
+			_tiles[i][j]->Initialize(setupRectangle, isPassible);
 			y += tileSize;
 		}
 

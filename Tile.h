@@ -8,9 +8,14 @@ class Tile : public GameObject
 public:
 			Tile();
 			~Tile();
-	//void	Initialize(SDL_Rect rectangle, SDL_Color colour);
+	void	Initialize(SDL_Rect rectangle, bool isPassible);
 	//void Render();
-	void Update() override;
-	void CleanUp() override;
+	void	Update() override;
+	void	CleanUp() override;
+	
+	bool	GetPassible();
+
+private:
+	bool	_passible;
 };
 #endif
