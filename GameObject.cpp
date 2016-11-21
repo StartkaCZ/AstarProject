@@ -10,22 +10,19 @@ GameObject::~GameObject()
 	DEBUG_MSG("Character Destructor");
 }
 
-int GameObject::GetX()
+void GameObject::Initialize(SDL_Rect rectangle, SDL_Color colour)
 {
-	return m_x;
+	_rectangle = rectangle;
+	_colour = colour;
 }
-
-void GameObject::SetX(int x)
+void GameObject::Render(SDL_Renderer*& sdl_renderer, const SDL_Rect& camera)
 {
-	m_x = x;
-}
+	SDL_SetRenderDrawColor(sdl_renderer, _colour.r, _colour.g, _colour.b, _colour.a);
 
-int GameObject::GetY()
-{
-	return m_y;
-}
+	SDL_Rect rectangleToRender = SDL_Rect(_rectangle);
 
-void GameObject::SetY(int y)
-{
-	m_y = y;
+	rectangleToRender.x -= camera.x;
+	rectangleToRender.y -= camera.y;
+
+	SDL_RenderFillRect(sdl_renderer, &rectangleToRender);
 }

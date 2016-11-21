@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Game::Game() : m_running(false)
+Game::Game() : _running(false)
 {
 }
 
@@ -15,19 +15,35 @@ Game::~Game()
 
 bool Game::Initialize(const char* title, int xpos, int ypos, int width, int height, int flags)
 {
-	if(SDL_Init(SDL_INIT_EVERYTHING) == 0)
+	_running = SetupSDL(title, xpos, ypos, width, height, flags);
+	
+	if (_running)
+	{
+		SetupLevel(width, height);
+	}
+
+	return _running;
+}
+bool Game::SetupSDL(const char* title, int xpos, int ypos, int width, int height, int flags)
+{
+	_camera.x = 0;
+	_camera.y = 0;
+	_camera.w = width;
+	_camera.h = height;
+
+	if (SDL_Init(SDL_INIT_EVERYTHING) == 0)
 	{
 		DEBUG_MSG("SDL Init success");
-		m_p_Window = SDL_CreateWindow(title, xpos, ypos, width, height, flags);
+		_window = SDL_CreateWindow(title, xpos, ypos, width, height, flags);
 
-		if(m_p_Window != 0)
+		if (_window != 0)
 		{
 			DEBUG_MSG("Window creation success");
-			m_p_Renderer = SDL_CreateRenderer(m_p_Window, -1, 0);
-			if(m_p_Renderer != 0)
+			_renderer = SDL_CreateRenderer(_window, -1, 0);
+			if (_renderer != 0)
 			{
 				DEBUG_MSG("Renderer creation success");
-				SDL_SetRenderDrawColor(m_p_Renderer, 255, 255, 255, 255);
+				SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
 			}
 			else
 			{
@@ -46,48 +62,99 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 		DEBUG_MSG("SDL init fail");
 		return false;
 	}
-	m_running = true;
 
 	return true;
 }
+void Game::SetupLevel(int width, int height)
+{
+	_level = 0;
 
+	_maxRowCol = 30;
+	_maxNPC = 5;
+	int maxWalls = 3;
+	int isToTouchWalls = 1;
+
+	if (_level == 1)
+	{
+		_maxRowCol = 100;
+		_maxNPC = 50;
+		maxWalls = 6;
+		isToTouchWalls = 2;
+	}
+	else if (_level == 2)
+	{
+		_maxRowCol = 1000;
+		_maxNPC = 500;
+		maxWalls = 18;
+		isToTouchWalls = 4;
+	}
+	//tile size = ((width + height) * 0.5 * 4) / maxRowCol
+	// scale the world 4 times
+	
+	_worldBottomRightCorner = (width + height) * 0.5f * WORLD_SCALE;
+	int tileSize = _worldBottomRightCorner / _maxRowCol;
+
+	_npcs = vector<NPC*>(_maxNPC);
+	_tiles = vector<vector<Tile*>>(_maxRowCol);
+
+	SDL_Rect setupRectangle = SDL_Rect();
+	SDL_Color setupColour = SDL_Color();
+
+	int x = 0;
+	int y = 0;
+	for (int i = 0; i < _maxRowCol; i++)
+	{
+		for (int j = 0; j < _maxRowCol; j++)
+		{
+			setupRectangle.x = x;
+			setupRectangle.y = y;
+			setupRectangle.h = tileSize;
+			setupRectangle.w = tileSize;
+
+			if (i == 0 || j == 0)
+			{
+				setupColour.g = 100;
+				setupColour.r = 100;
+				setupColour.b = 100;
+				setupColour.a = 255;
+			}
+			else
+			{
+				setupColour.g = 0;
+				setupColour.r = 0;
+				setupColour.b = 0;
+				setupColour.a = 255;
+			}
+
+			_tiles[i].push_back(new Tile());
+			_tiles[i][j]->Initialize(setupRectangle, setupColour);
+			y += tileSize;
+		}
+
+		y = 0;
+		x += tileSize;
+	}
+}
 
 
 void Game::LoadContent()
 {
-	DEBUG_MSG("Loading Content");
-	m_p_Surface = SDL_LoadBMP("assets/sprite.bmp");
-	m_p_Texture = SDL_CreateTextureFromSurface(m_p_Renderer, m_p_Surface);
-	SDL_FreeSurface(m_p_Surface);
-
-	if(SDL_QueryTexture(m_p_Texture, NULL, NULL, &m_Source.w, &m_Destination.h)==0)
-	{
-		m_Destination.x = m_Source.x = 0;
-		m_Destination.y = m_Source.y = 0;
-		m_Destination.w = m_Source.w;
-		m_Destination.h = m_Source.h;
-
-		//DEBUG_MSG("Destination X:" + m_Destination.x);
-		/*DEBUG_MSG("Destination Y:" + m_Destination.y);
-		DEBUG_MSG("Destination W:" + m_Destination.w);
-		DEBUG_MSG("Destination H:" + m_Destination.h);*/
-	}
-	else
-	{
-		DEBUG_MSG("Texture Query Failed");
-		m_running = false;
-	}
+	DEBUG_MSG("Loading Content - Nothing to load :(");
 }
 
 void Game::Render()
 {
-	SDL_RenderClear(m_p_Renderer);
-	DEBUG_MSG("Width Source" + m_Destination.w);
-	DEBUG_MSG("Width Destination" + m_Destination.w);
-
-	if(m_p_Renderer != nullptr && m_p_Texture != nullptr)
-		SDL_RenderCopy(m_p_Renderer, m_p_Texture, NULL, NULL);
-	SDL_RenderPresent(m_p_Renderer);
+	SDL_RenderClear(_renderer);
+	
+	for (int i = 0; i < _maxRowCol; i++)
+	{
+		for (int j = 0; j < _maxRowCol; j++)
+		{
+			_tiles[i][j]->Render(_renderer, _camera);
+		}
+	}
+	
+	SDL_RenderPresent(_renderer);
 }
 
 void Game::Update()
@@ -106,26 +173,38 @@ void Game::HandleEvents()
 				switch(event.key.keysym.sym)
 				{
 				case SDLK_ESCAPE:
-					m_running = false;
+					_running = false;
 					break;
 				case SDLK_UP:
 					DEBUG_MSG("Up Key Pressed");
-					SDL_SetRenderDrawColor(m_p_Renderer, 255, 0, 0, 255);
+					if (_camera.y > 0)
+					{
+						_camera.y--;
+					}
 					break;
 				case SDLK_DOWN:
 					DEBUG_MSG("Down Key Pressed");
-					SDL_SetRenderDrawColor(m_p_Renderer, 0, 255, 0, 255);
+					if (_camera.y + _camera.h < _worldBottomRightCorner)
+					{
+						_camera.y++;
+					}
 					break;
 				case SDLK_LEFT:
 					DEBUG_MSG("Left Key Pressed");
-					SDL_SetRenderDrawColor(m_p_Renderer, 0, 0, 255, 255);
+					if (_camera.x > 0)
+					{
+						_camera.x--;
+					}
 					break;
 				case SDLK_RIGHT:
 					DEBUG_MSG("Right Key Pressed");
-					SDL_SetRenderDrawColor(m_p_Renderer, 255, 255, 255, 255);
+					if (_camera.x + _camera.w < _worldBottomRightCorner)
+					{
+						_camera.x++;
+					}
 					break;
 				default:
-					SDL_SetRenderDrawColor(m_p_Renderer, 0, 0, 0, 255);
+					SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
 					break;
 				}
 	}
@@ -133,20 +212,18 @@ void Game::HandleEvents()
 
 bool Game::IsRunning()
 {
-	return m_running;
+	return _running;
 }
 
 void Game::UnloadContent()
 {
 	DEBUG_MSG("Unloading Content");
-	//delete(m_p_Texture);
-	//m_p_Texture = NULL;
 }
 
 void Game::CleanUp()
 {
 	DEBUG_MSG("Cleaning Up");
-	SDL_DestroyWindow(m_p_Window);
-	SDL_DestroyRenderer(m_p_Renderer);
+	SDL_DestroyWindow(_window);
+	SDL_DestroyRenderer(_renderer);
 	SDL_Quit();
 }

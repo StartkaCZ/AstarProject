@@ -6,11 +6,11 @@
 class Player : public GameObject
 {
 public:
-	Player();
-	~Player();
-	void Initialize(const GameObjectParameters*); 
-	void Render();
-	void Update();
-	void CleanUp();
+			Player();
+			~Player();
+	//void Initialize(SDL_Rect rectangle, SDL_Color colour);
+	//void Render();
+	void	Update() override;
+	void	CleanUp() override;
 };
 #endif
