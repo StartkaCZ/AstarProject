@@ -46,8 +46,7 @@ private:
 	int						_maxNPC;
 
 	int						_worldBottomRightCorner;
-
-	const float				WORLD_SCALE = 2.0f;
+	float					_worldScale;
 };
 #endif
 

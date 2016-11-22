@@ -2,7 +2,7 @@
 
 Tile::Tile()
 {
-	DEBUG_MSG("Constructing Tile");
+	//DEBUG_MSG("Constructing Tile");
 }
 
 Tile::~Tile()
@@ -12,7 +12,7 @@ Tile::~Tile()
 
 void Tile::Initialize(SDL_Rect rectangle, bool isPassible)
 {
-	DEBUG_MSG("Tile Initializing");
+	//DEBUG_MSG("Tile Initializing");
 	SDL_Color colour = SDL_Color();
 
 	_passible = isPassible;
@@ -33,6 +33,25 @@ void Tile::Initialize(SDL_Rect rectangle, bool isPassible)
 	}
 
 	GameObject::Initialize(rectangle, colour);
+}
+void Tile::ChangeTile(bool isPassible)
+{
+	_passible = isPassible;
+
+	if (_passible)
+	{
+		_colour.g = 0;
+		_colour.r = 0;
+		_colour.b = 0;
+		_colour.a = 255;
+	}
+	else
+	{
+		_colour.g = 100;
+		_colour.r = 100;
+		_colour.b = 100;
+		_colour.a = 255;
+	}
 }
 /*
 void Tile::Render()

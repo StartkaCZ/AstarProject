@@ -2,7 +2,7 @@
 
 GameObject::GameObject()
 {
-	DEBUG_MSG("Character Constructor");
+	//DEBUG_MSG("Character Constructor");
 }
 
 GameObject::~GameObject()

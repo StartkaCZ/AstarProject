@@ -9,6 +9,7 @@ public:
 			Tile();
 			~Tile();
 	void	Initialize(SDL_Rect rectangle, bool isPassible);
+	void	ChangeTile(bool isPassible);
 	//void Render();
 	void	Update() override;
 	void	CleanUp() override;

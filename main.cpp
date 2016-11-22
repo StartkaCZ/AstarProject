@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 
 	//Adjust screen positions as needed
 	DEBUG_MSG("Game Initialising");
-	game->Initialize("A* Simulation",300,100,800,800, SDL_WINDOW_INPUT_FOCUS);
+	game->Initialize("A* Simulation",300,100,600,600, SDL_WINDOW_INPUT_FOCUS);
 	
 	DEBUG_MSG("Loading Content");
 	game->LoadContent();
