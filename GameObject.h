@@ -20,6 +20,7 @@ public:
 	virtual void	Update() = 0;
 	virtual void	CleanUp() = 0;
 	
+	SDL_Rect		getRectangle() const;
 
 protected:
 	SDL_Rect		_rectangle;

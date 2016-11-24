@@ -2,7 +2,7 @@
 
 Player::Player()
 {
-	DEBUG_MSG("Constructing Player");
+	//DEBUG_MSG("Constructing Player");
 }
 
 Player::~Player()

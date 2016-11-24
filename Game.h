@@ -17,7 +17,17 @@ public:
 
 	bool					Initialize(const char* title, int xpos, int ypos, int width, int height, int flags);
 	bool					SetupSDL(const char* title, int xpos, int ypos, int width, int height, int flags);
-	void					SetupLevel(int width, int height);
+	void					SetupLevel();
+	void					SetupWorld(int width, int height);
+	void					SetupTiles(int width, int height);
+	void					SetupWalls(int offset, int spacing);
+	void					SetupPlayerSpawnArea(int offset);
+	void					SpawnPlayer(const Tile * tile);
+	void					SetupNPC_SpawnArea(int offset, int spacing);
+	void					SpawnNPC(const Tile* tile);
+	
+	SDL_Rect				CreateRectangle(const Tile* tile);
+	SDL_Color				CreateColour(const Tile* tile, bool isPlayer);
 
 	void					LoadContent();
 	void					UnloadContent();
@@ -45,6 +55,7 @@ private:
 	int						_level;
 	int						_maxRowCol;
 	int						_maxNPC;
+	int						_maxWalls;
 
 	int						_worldBottomRightCorner;
 	float					_worldScale;

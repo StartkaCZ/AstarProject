@@ -24,6 +24,8 @@ void Tile::ChangeTile(Type type)
 	switch (_type)
 	{
 	case Tile::Type::Empty:
+		_isOccupied = false;
+
 		_colour.g = 0;
 		_colour.r = 0;
 		_colour.b = 0;
@@ -31,6 +33,8 @@ void Tile::ChangeTile(Type type)
 		break;
 
 	case Tile::Type::Wall:
+		_isOccupied = true;
+
 		_colour.g = 100;
 		_colour.r = 100;
 		_colour.b = 100;
@@ -38,15 +42,19 @@ void Tile::ChangeTile(Type type)
 		break;
 
 	case Tile::Type::PlayerSpawn:
-		_colour.g = 255;
+		_isOccupied = false;
+
+		_colour.g = 125;
 		_colour.r = 0;
 		_colour.b = 0;
 		_colour.a = 255;
 		break;
 
 	case Tile::Type::NpcSpawn:
+		_isOccupied = false;
+
 		_colour.g = 0;
-		_colour.r = 255;
+		_colour.r = 125;
 		_colour.b = 0;
 		_colour.a = 255;
 		break;
@@ -71,7 +79,16 @@ void Tile::CleanUp()
 	DEBUG_MSG("Cleaning Up Tile");
 }
 
-Tile::Type Tile::getType()
+void Tile::SetOccupied(bool isOccupied)
+{
+	_isOccupied = isOccupied;
+}
+
+bool Tile::getOccupied() const
+{
+	return _isOccupied;
+}
+Tile::Type Tile::getType() const
 {
 	return _type;
 }

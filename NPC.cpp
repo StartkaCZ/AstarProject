@@ -2,7 +2,7 @@
 
 NPC::NPC()
 {
-	DEBUG_MSG("Constructing NPC");
+	//DEBUG_MSG("Constructing NPC");
 }
 
 NPC::~NPC()

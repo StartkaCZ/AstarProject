@@ -26,3 +26,8 @@ void GameObject::Render(SDL_Renderer*& sdl_renderer, const SDL_Rect& camera)
 
 	SDL_RenderFillRect(sdl_renderer, &rectangleToRender);
 }
+
+SDL_Rect GameObject::getRectangle() const
+{
+	return _rectangle;
+}

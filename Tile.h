@@ -23,9 +23,13 @@ public:
 	void	Update() override;
 	void	CleanUp() override;
 	
-	Type	getType();
+	void	SetOccupied(bool isOccupied);
+
+	Type	getType() const;
+	bool	getOccupied() const;
 
 private:
 	Type	_type;
+	bool	_isOccupied;
 };
 #endif
