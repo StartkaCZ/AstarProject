@@ -38,7 +38,7 @@ bool Game::SetupSDL(const char* title, int xpos, int ypos, int width, int height
 			if (_renderer != 0)
 			{
 				DEBUG_MSG("Renderer creation success");
-				SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
+				SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
 			}
 			else
 			{
@@ -62,7 +62,7 @@ bool Game::SetupSDL(const char* title, int xpos, int ypos, int width, int height
 }
 void Game::SetupLevel(int width, int height)
 {
-	_level = 2;
+	_level = 1;
 
 	_camera.x = 0;
 	_camera.y = 0;
@@ -99,6 +99,7 @@ void Game::SetupLevel(int width, int height)
 
 	_npcs = vector<NPC*>(_maxNPC);
 	_tiles = vector<vector<Tile*>>(_maxRowCol);
+	_renderTiles = vector<Tile*>();
 
 	SDL_Rect setupRectangle = SDL_Rect();
 	SDL_Color setupColour = SDL_Color();
@@ -116,20 +117,22 @@ void Game::SetupLevel(int width, int height)
 	{
 		for (int j = 0; j < _maxRowCol; j++)
 		{
-			bool isPassible = true;
+			Tile::Type type = Tile::Type::Empty;
 
 			setupRectangle.x = x;
 			setupRectangle.y = y;
 			setupRectangle.h = tileSize;
 			setupRectangle.w = tileSize;
 
+			_tiles[i].push_back(new Tile());
+
 			if (i == 0 || j == 0 || i == _maxRowCol-1 || j == _maxRowCol-1)
 			{
-				isPassible = false;
+				type = Tile::Type::Wall;
+				_renderTiles.push_back(_tiles[i][j]);
 			}			
-
-			_tiles[i].push_back(new Tile());
-			_tiles[i][j]->Initialize(setupRectangle, isPassible);
+			
+			_tiles[i][j]->Initialize(setupRectangle, type);
 			y += tileSize;
 		}
 
@@ -137,9 +140,9 @@ void Game::SetupLevel(int width, int height)
 		x += tileSize;
 	}
 
-
+	
 	int tilesToWalls = (_maxRowCol-2) * 0.9f;
-	bool bottomToTop = rand() % 2 == 0;
+	bool bottomToTop = false;
 
 	for (int k = 0; k < maxWalls; k++)
 	{
@@ -149,7 +152,8 @@ void Game::SetupLevel(int width, int height)
 		{
 			for (int j = 1; j < tilesToWalls; j++)
 			{
-				_tiles[i][j]->ChangeTile(false);
+				_tiles[i][j]->ChangeTile(Tile::Type::Wall);
+				_renderTiles.push_back(_tiles[i][j]);
 			}
 		}
 		else
@@ -158,12 +162,39 @@ void Game::SetupLevel(int width, int height)
 
 			for (int j = _maxRowCol - 1; j > amount; j--)
 			{
-				_tiles[i][j]->ChangeTile(false);
+				_tiles[i][j]->ChangeTile(Tile::Type::Wall);
+				_renderTiles.push_back(_tiles[i][j]);
 			}
 		}
 
 		bottomToTop = !bottomToTop;
 	}
+
+	int rowLimit = offset;
+	int colLimit = _maxRowCol - rowLimit - 1;
+
+	for (int i = 1; i < rowLimit; i++)
+	{
+		for (int j = _maxRowCol -2; j > colLimit; j--)
+		{
+			_tiles[i][j]->ChangeTile(Tile::Type::PlayerSpawn);
+			_renderTiles.push_back(_tiles[i][j]);
+		}
+	}
+
+	rowLimit = offset + (spacing * (maxWalls-1));
+	colLimit = _maxRowCol / 3;
+
+	for (int i = _maxRowCol-2; i > rowLimit; i--)
+	{
+		for (int j = _maxRowCol * 2 / 3; j > colLimit; j--)
+		{
+			_tiles[i][j]->ChangeTile(Tile::Type::NpcSpawn);
+			_renderTiles.push_back(_tiles[i][j]);
+		}
+	}
+
+	_renderTiles.shrink_to_fit();
 }
 
 
@@ -175,15 +206,13 @@ void Game::LoadContent()
 void Game::Render()
 {
 	SDL_RenderClear(_renderer);
-	
-	for (int i = 0; i < _maxRowCol; i++)
+
+	for (int i = 0; i < _renderTiles.size(); i++)
 	{
-		for (int j = 0; j < _maxRowCol; j++)
-		{
-			_tiles[i][j]->Render(_renderer, _camera);
-		}
+		_renderTiles[i]->Render(_renderer, _camera);
 	}
-	
+
+	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
 	SDL_RenderPresent(_renderer);
 }
 
@@ -198,9 +227,9 @@ void Game::HandleEvents()
 
 	while (SDL_PollEvent(&event))
 	{
-		switch(event.type)
+		switch (event.type)
 			case SDL_KEYDOWN:
-				switch(event.key.keysym.sym)
+				switch (event.key.keysym.sym)
 				{
 				case SDLK_ESCAPE:
 					_running = false;
@@ -210,28 +239,28 @@ void Game::HandleEvents()
 					//DEBUG_MSG("Up Key Pressed");
 					if (_camera.y > 0)
 					{
-						_camera.y-=50;
+						_camera.y -= 50;
 					}
 					break;
 				case SDLK_DOWN:
 					//DEBUG_MSG("Down Key Pressed");
 					if (_camera.y + _camera.h < _worldBottomRightCorner)
 					{
-						_camera.y+= 50;
+						_camera.y += 50;
 					}
 					break;
 				case SDLK_LEFT:
 					//DEBUG_MSG("Left Key Pressed");
 					if (_camera.x > 0)
 					{
-						_camera.x-= 50;
+						_camera.x -= 50;
 					}
 					break;
 				case SDLK_RIGHT:
 					//DEBUG_MSG("Right Key Pressed");
 					if (_camera.x + _camera.w < _worldBottomRightCorner)
 					{
-						_camera.x+= 50;
+						_camera.x += 50;
 					}
 					break;
 

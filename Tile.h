@@ -6,17 +6,26 @@
 class Tile : public GameObject
 {
 public:
+	enum class Type
+	{
+		Empty,
+		Wall,
+		PlayerSpawn,
+		NpcSpawn
+	};
+
+
 			Tile();
 			~Tile();
-	void	Initialize(SDL_Rect rectangle, bool isPassible);
-	void	ChangeTile(bool isPassible);
+	void	Initialize(SDL_Rect rectangle, Type type);
+	void	ChangeTile(Type type);
 	//void Render();
 	void	Update() override;
 	void	CleanUp() override;
 	
-	bool	GetPassible();
+	Type	getType();
 
 private:
-	bool	_passible;
+	Type	_type;
 };
 #endif

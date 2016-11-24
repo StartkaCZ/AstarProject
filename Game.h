@@ -35,6 +35,7 @@ private:
 
 	Player*					_player;
 	vector<NPC*>			_npcs;
+	vector<Tile*>			_renderTiles;
 	vector<vector<Tile*>>	_tiles;
 
 	SDL_Rect				_playerSpawnArea;
