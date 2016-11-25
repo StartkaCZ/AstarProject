@@ -5,6 +5,8 @@
 #include "Player.h"
 #include "Tile.h"
 #include "NPC.h"
+#include "Level.h"
+#include "Camera.h"
 
 #include <SDL.h>
 #include <vector>
@@ -17,17 +19,6 @@ public:
 
 	bool					Initialize(const char* title, int xpos, int ypos, int width, int height, int flags);
 	bool					SetupSDL(const char* title, int xpos, int ypos, int width, int height, int flags);
-	void					SetupLevel();
-	void					SetupWorld(int width, int height);
-	void					SetupTiles(int width, int height);
-	void					SetupWalls(int offset, int spacing);
-	void					SetupPlayerSpawnArea(int offset);
-	void					SpawnPlayer(const Tile * tile);
-	void					SetupNPC_SpawnArea(int offset, int spacing);
-	void					SpawnNPC(const Tile* tile);
-	
-	SDL_Rect				CreateRectangle(const Tile* tile);
-	SDL_Color				CreateColour(const Tile* tile, bool isPlayer);
 
 	void					LoadContent();
 	void					UnloadContent();
@@ -43,6 +34,8 @@ private:
 	SDL_Window*				_window;
 	SDL_Renderer*			_renderer;
 
+	Level*					_level;
+	Camera*					_camera;
 	Player*					_player;
 	vector<NPC*>			_npcs;
 	vector<Tile*>			_renderTiles;
@@ -50,15 +43,9 @@ private:
 
 	SDL_Rect				_playerSpawnArea;
 	SDL_Rect				_NPCSpawnArea;
-	SDL_Rect				_camera;
 
-	int						_level;
-	int						_maxRowCol;
-	int						_maxNPC;
-	int						_maxWalls;
-
-	int						_worldBottomRightCorner;
-	float					_worldScale;
+	unsigned int			_lastTime;//time of last update;
+	int						_currentLevel;
 };
 #endif
 

@@ -5,12 +5,17 @@
 #include <SDL.h>
 #include <SDL_image.h>
 
-#include <Game.h>
+#include "LTimer.h"
+#include "Game.h"
 
 using namespace std;
 
+const int SCREEN_FPS = 60;
+const int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
+
 int main(int argc, char** argv)
 {
+	srand(NULL);
 	DEBUG_MSG("Game Object Created");
 	Game* game = new Game();
 
@@ -22,6 +27,25 @@ int main(int argc, char** argv)
 	game->LoadContent();
 
 	DEBUG_MSG("Game Loop Starting......");
+	LTimer capTimer;//to cap framerate
+
+	int frameNum = 0;
+	while (game->IsRunning())
+	{
+		capTimer.start();
+
+		game->HandleEvents();
+		game->Update();
+		game->Render();
+
+		int frameTicks = capTimer.getTicks();//time since start of frame
+
+		if (frameTicks < SCREEN_TICKS_PER_FRAME)
+		{
+			//Wait remaining time before going to next frame
+			SDL_Delay(SCREEN_TICKS_PER_FRAME - frameTicks);
+		}
+	}
 	while(game->IsRunning())
 	{
 		game->HandleEvents();
