@@ -12,13 +12,13 @@ public:
 							Level(int level);
 							~Level();
 	
-	void					Initialize(Player*& player, vector<NPC*>& npcs, vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height);
+	void					Initialize(Player*& player, vector<NPC*>& npcs, vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height);
 
-	void					SetupTiles(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height);
-	void					SetupWalls(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int offset, int spacing);
-	void					SetupPlayerSpawnArea(Player*& player, vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int offset);
+	void					SetupTiles(vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height);
+	void					SetupWalls(vector<vector<Tile*>>& tiles, int offset, int spacing);
+	void					SetupPlayerSpawnArea(Player*& player, vector<vector<Tile*>>& tiles, int offset);
 	void					SpawnPlayer(Player*& player, Tile *& tile);
-	void					SetupNPC_SpawnArea(vector<NPC*>& npcs, vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int offset, int spacing);
+	void					SetupNPC_SpawnArea(vector<NPC*>& npcs, vector<vector<Tile*>>& tiles, int offset, int spacing);
 	void					SpawnNPC(vector<NPC*>& npcs, Tile*& tile);
 
 	SDL_Rect				CreateRectangle(const Tile* tile);

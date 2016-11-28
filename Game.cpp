@@ -23,7 +23,7 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 	
 	if (_running)
 	{
-		_currentLevel = 0;
+		_currentLevel = 2;
 		DEBUG_MSG("LEVEL: ");
 		DEBUG_MSG(_currentLevel);
 
@@ -37,17 +37,15 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 
 		_npcs = vector<NPC*>();
 		_tiles = vector<vector<Tile*>>();
-		_renderTiles = vector<Tile*>();
 
 		_level = new Level(_currentLevel);
-		_level->Initialize(_player, _npcs, _renderTiles, _tiles, worldBottomRightCorner, width, height);
+		_level->Initialize(_player, _npcs, _tiles, worldBottomRightCorner, width, height);
 
 		_camera = new Camera();
 		_camera->Initialize(cameraRectangle, worldBottomRightCorner);
 
 		_npcs.shrink_to_fit();
 		_tiles.shrink_to_fit();
-		_renderTiles.shrink_to_fit();
 	}
 
 	return _running;
@@ -98,9 +96,17 @@ void Game::Render()
 {
 	SDL_RenderClear(_renderer);
 
-	for (int i = 0; i < _renderTiles.size(); i++)
+	int cameraLeftPosition = _camera->getRectangle().x / _level->getTileSize();
+	int cameraBottomPosition = _camera->getRectangle().y / _level->getTileSize();
+	int cameraRightPosition = (_camera->getRectangle().x + _camera->getRectangle().w) / _level->getTileSize();
+	int cameraTopPosition = (_camera->getRectangle().y + _camera->getRectangle().h) / _level->getTileSize();
+
+	for (int i = cameraLeftPosition; i < cameraRightPosition; i++)
 	{
-		_renderTiles[i]->Render(_renderer, _camera->getRectangle());
+		for (int j = cameraBottomPosition; j < cameraTopPosition; j++)
+		{
+			_tiles[i][j]->Render(_renderer, _camera->getRectangle());
+		}
 	}
 
 	for (int i = 0; i < _npcs.size(); i++)

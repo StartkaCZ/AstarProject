@@ -30,7 +30,7 @@ Level::~Level()
 
 }
 
-void Level::Initialize(Player*& player, vector<NPC*>& npcs, vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height)
+void Level::Initialize(Player*& player, vector<NPC*>& npcs, vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height)
 {
 	//tiles available = row/col max tiles - (edge + edge) - (spacing for player/NPC area)
 	int spawnAreaTiles = _maxRowCol * 0.2f;
@@ -38,13 +38,13 @@ void Level::Initialize(Player*& player, vector<NPC*>& npcs, vector<Tile*>& rende
 	int spacing = tilesAvailble / (_maxWalls - 1);
 	int offset = 2 + spawnAreaTiles * 0.5f;
 
-	SetupTiles(renderTiles, tiles, worldBottomRightCorner, width, height);
-	SetupWalls(renderTiles, tiles, offset, spacing);
-	SetupPlayerSpawnArea(player, renderTiles, tiles, offset);
-	SetupNPC_SpawnArea(npcs, renderTiles, tiles, offset, spacing);
+	SetupTiles(tiles, worldBottomRightCorner, width, height);
+	SetupWalls(tiles, offset, spacing);
+	SetupPlayerSpawnArea(player, tiles, offset);
+	SetupNPC_SpawnArea(npcs, tiles, offset, spacing);
 }
 
-void Level::SetupTiles(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height)
+void Level::SetupTiles(vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height)
 {
 	//tile size = ((width + height) * 0.5 * 4) / maxRowCol
 	// scale the world 4 times
@@ -75,7 +75,6 @@ void Level::SetupTiles(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles,
 			if (i == 0 || j == 0 || i == _maxRowCol - 1 || j == _maxRowCol - 1)
 			{
 				type = Tile::Type::Wall;
-				renderTiles.push_back(tiles[i][j]);
 			}
 
 			tiles[i][j]->Initialize(setupRectangle, type);
@@ -86,7 +85,7 @@ void Level::SetupTiles(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles,
 		x += _tileSize;
 	}
 }
-void Level::SetupWalls(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int offset, int spacing)
+void Level::SetupWalls(vector<vector<Tile*>>& tiles, int offset, int spacing)
 {
 	int tilesToWalls = (_maxRowCol - 2) * 0.9f;
 	bool bottomToTop = false;
@@ -100,7 +99,6 @@ void Level::SetupWalls(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles,
 			for (int j = 1; j < tilesToWalls; j++)
 			{
 				tiles[i][j]->ChangeTile(Tile::Type::Wall);
-				renderTiles.push_back(tiles[i][j]);
 			}
 		}
 		else
@@ -110,7 +108,6 @@ void Level::SetupWalls(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles,
 			for (int j = _maxRowCol - 1; j > amount; j--)
 			{
 				tiles[i][j]->ChangeTile(Tile::Type::Wall);
-				renderTiles.push_back(tiles[i][j]);
 			}
 		}
 
@@ -118,7 +115,7 @@ void Level::SetupWalls(vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles,
 	}
 }
 
-void Level::SetupPlayerSpawnArea(Player*& player, vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int offset)
+void Level::SetupPlayerSpawnArea(Player*& player, vector<vector<Tile*>>& tiles, int offset)
 {
 	int rowLimit = offset;
 	int colLimit = _maxRowCol - rowLimit - 1;
@@ -129,7 +126,6 @@ void Level::SetupPlayerSpawnArea(Player*& player, vector<Tile*>& renderTiles, ve
 		for (int j = _maxRowCol - 2; j > colLimit; j--)
 		{
 			tiles[i][j]->ChangeTile(Tile::Type::PlayerSpawn);
-			renderTiles.push_back(tiles[i][j]);
 
 			if (player == nullptr)
 			{
@@ -143,7 +139,7 @@ void Level::SetupPlayerSpawnArea(Player*& player, vector<Tile*>& renderTiles, ve
 	DEBUG_MSG("Player Spawn Tiles: ");
 	DEBUG_MSG(tileCounter);
 }
-void Level::SetupNPC_SpawnArea(vector<NPC*>& npcs, vector<Tile*>& renderTiles, vector<vector<Tile*>>& tiles, int offset, int spacing)
+void Level::SetupNPC_SpawnArea(vector<NPC*>& npcs, vector<vector<Tile*>>& tiles, int offset, int spacing)
 {
 	int rowLimit = offset + (spacing * (_maxWalls - 1));
 	int colLimit = _maxRowCol / 3;
@@ -154,7 +150,6 @@ void Level::SetupNPC_SpawnArea(vector<NPC*>& npcs, vector<Tile*>& renderTiles, v
 		for (int j = _maxRowCol * 2 / 3; j > colLimit; j--)
 		{
 			tiles[i][j]->ChangeTile(Tile::Type::NpcSpawn);
-			renderTiles.push_back(tiles[i][j]);
 
 			if (npcs.size() < _maxNPC)
 			{
