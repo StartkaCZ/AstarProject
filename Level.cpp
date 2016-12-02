@@ -92,7 +92,26 @@ void Level::SetupWalls(vector<vector<Tile*>>& tiles, int offset, int spacing)
 
 	for (int k = 0; k < _maxWalls; k++)
 	{
-		int i = offset + (spacing * k);
+		int i = 0;
+
+		if (k == 0)
+		{
+			int halfSpacing = spacing*0.5f;
+			int randomOffset = rand() % halfSpacing;
+			i = offset + randomOffset + (spacing * k);
+		}
+		else if (k != _maxWalls - 1)
+		{
+			int halfSpacing = spacing*0.5f;
+			int randomOffset = rand() % halfSpacing - (halfSpacing*0.5f);
+			i = offset + randomOffset + (spacing * k);
+		}
+		else
+		{
+			int halfSpacing = spacing*0.5f;
+			int randomOffset = rand() % halfSpacing - (spacing*0.75f);
+			i = offset + randomOffset + (spacing * k);
+		}
 
 		if (bottomToTop)
 		{

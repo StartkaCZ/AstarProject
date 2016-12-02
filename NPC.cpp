@@ -1,7 +1,9 @@
 #include <NPC.h>
 
 NPC::NPC()
-{
+	: _closedList(list<Node>())
+	, _openList(priority_queue<Node>())
+{ 
 	//DEBUG_MSG("Constructing NPC");
 }
 
@@ -34,6 +36,8 @@ void NPC::CleanUp()
 void NPC::CalculateAstar()
 {
 	//DEBUG_MSG("Calculating A*...");
+	_closedList.clear();
+	//_openList.push;
 
 	//DEBUG_MSG("... A* Finished");
 }

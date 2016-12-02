@@ -15,7 +15,7 @@ const int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 
 int main(int argc, char** argv)
 {
-	srand(NULL);
+	srand(time(NULL));
 	DEBUG_MSG("Game Object Created");
 	Game* game = new Game();
 

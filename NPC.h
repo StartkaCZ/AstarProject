@@ -2,9 +2,21 @@
 #define NPC_H
 
 #include "GameObject.h"
+#include<queue>
+#include<list>
 
 class NPC : public GameObject
 {
+private:
+	struct Node
+	{
+		int		f;
+		int		g;
+		int		h;
+
+		Node*	parent;
+	};
+
 public:
 			NPC();
 			~NPC();
@@ -16,6 +28,8 @@ public:
 	void	CalculateAstar();
 
 private:
-	int		testValue;
+	
+	std::list<Node>				_closedList;
+	std::priority_queue<Node>	_openList;
 };
 #endif
