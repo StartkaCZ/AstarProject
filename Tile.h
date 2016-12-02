@@ -19,7 +19,7 @@ public:
 			~Tile();
 	void	Initialize(SDL_Rect rectangle, Type type);
 	void	ChangeTile(Type type);
-	//void Render();
+	void	Render(SDL_Renderer*& sdl_renderer, const SDL_Rect& camera) override;
 	void	Update() override;
 	void	CleanUp() override;
 	

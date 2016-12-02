@@ -1,10 +1,13 @@
 #include <Game.h>
 #include <iostream>
-#include <thread>
 
 #include "LTimer.h"
 
 using namespace std;
+
+queue<NPC*>Game::_jobs = queue<NPC*>();
+int Game::_mutex = 1;
+bool Game::_lock = false;
 
 Game::Game() 
 	: _running(false)
@@ -17,13 +20,14 @@ Game::~Game()
 {
 }
 
+
 bool Game::Initialize(const char* title, int xpos, int ypos, int width, int height, int flags)
 {
 	_running = SetupSDL(title, xpos, ypos, width, height, flags);
 	
 	if (_running)
 	{
-		_currentLevel = 2;
+		_currentLevel = 0;
 		DEBUG_MSG("LEVEL: ");
 		DEBUG_MSG(_currentLevel);
 
@@ -46,6 +50,11 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 
 		_npcs.shrink_to_fit();
 		_tiles.shrink_to_fit();
+
+		for (int i = 0; i < 8; i++)
+		{
+			SDL_Thread* worker = SDL_CreateThread(Worker, "Worker" + i, (void*)NULL);
+		}
 	}
 
 	return _running;
@@ -116,7 +125,7 @@ void Game::Render()
 
 	_player->Render(_renderer, _camera->getRectangle());
 
-	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
+	SDL_SetRenderDrawColor(_renderer, 55, 55, 55, 255);
 	SDL_RenderPresent(_renderer);
 }
 
@@ -129,8 +138,65 @@ void Game::Update()
 	_player->Update(_tiles, _level->getTileSize(), deltaTime);
 
 
+	for (int i = 0; i < _npcs.size(); i++)
+	{
+		_jobs.push(_npcs[i]);
+	}
+
+
 	//save the curent time for next frame
 	_lastTime = currentTime;
+}
+
+int Game::Worker(void* ptr)
+{
+	while (true)
+	{
+		
+		NPC* npc = nullptr;
+
+		P();
+
+		while (_lock)
+		{
+		}
+		
+		_lock = true;
+		if (_jobs.size() > 0)
+		{
+			//DEBUG_MSG("Inside:");
+			npc = _jobs.front();
+			_jobs.pop();
+			//DEBUG_MSG("Done:");
+		}
+		_lock = false;
+
+		V();
+
+		if (npc != nullptr)
+		{
+			DEBUG_MSG("Calculating A*...");
+			npc->CalculateAstar();
+		}
+	}
+}
+
+void Game::P()
+{
+	DEBUG_MSG("Mutex: ");
+	DEBUG_MSG(_mutex);
+
+	while (_mutex == 0)
+	{
+		//await
+		DEBUG_MSG("Waiting...");
+	}
+
+	_mutex--;
+}
+void Game::V()
+{
+	_mutex++;
 }
 
 void Game::HandleEvents()

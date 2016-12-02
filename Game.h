@@ -10,6 +10,7 @@
 
 #include <SDL.h>
 #include <vector>
+#include <queue>
 
 class Game
 {
@@ -28,6 +29,10 @@ public:
 	bool					IsRunning();
 	void					CleanUp();
 
+	static void				P(); //used to delay process
+	static void				V(); //used to signal occurance
+	static int				Worker(void*);
+
 private:
 	bool					_running;
 
@@ -45,6 +50,16 @@ private:
 
 	unsigned int			_lastTime;//time of last update;
 	int						_currentLevel;
+
+	int						_arrive[8] = { 0 };
+	int						_continue[8] = { 0 };
+
+	static queue<NPC*>		_jobs;
+	static int				_mutex;
+	static bool				_lock;
 };
+
+
+
 #endif
 

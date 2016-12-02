@@ -12,5 +12,10 @@ public:
 	//void Render();
 	void	Update() override;
 	void	CleanUp() override;
+
+	void	CalculateAstar();
+
+private:
+	int		testValue;
 };
 #endif

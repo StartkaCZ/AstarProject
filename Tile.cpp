@@ -63,12 +63,26 @@ void Tile::ChangeTile(Type type)
 		break;
 	}
 }
-/*
-void Tile::Render()
+
+void Tile::Render(SDL_Renderer*& sdl_renderer, const SDL_Rect& camera)
 {
-DEBUG_MSG("Tile Drawing");
+	SDL_SetRenderDrawColor(sdl_renderer, _colour.r, _colour.g, _colour.b, _colour.a);
+
+	SDL_Rect rectangleToRender = SDL_Rect(_rectangle);
+
+	rectangleToRender.x -= camera.x;
+	rectangleToRender.y -= camera.y;
+
+	if (_type == Tile::Type::Empty)
+	{
+		SDL_RenderDrawRect(sdl_renderer, &rectangleToRender);
+	}
+	else
+	{
+		SDL_RenderFillRect(sdl_renderer, &rectangleToRender);
+	}
 }
-*/
+
 void Tile::Update()
 {
 	DEBUG_MSG("Tile Updating");

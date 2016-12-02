@@ -30,3 +30,10 @@ void NPC::CleanUp()
 {
 	DEBUG_MSG("Cleaning Up NPC");
 }
+
+void NPC::CalculateAstar()
+{
+	//DEBUG_MSG("Calculating A*...");
+
+	//DEBUG_MSG("... A* Finished");
+}
