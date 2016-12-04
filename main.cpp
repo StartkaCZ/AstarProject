@@ -16,15 +16,11 @@ const int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
-	DEBUG_MSG("Game Object Created");
 	Game* game = new Game();
 
 	//Adjust screen positions as needed
 	DEBUG_MSG("Game Initialising");
 	game->Initialize("A* Simulation",300,100,600,600, SDL_WINDOW_INPUT_FOCUS);
-	
-	DEBUG_MSG("Loading Content");
-	game->LoadContent();
 
 	DEBUG_MSG("Game Loop Starting......");
 	LTimer capTimer;//to cap framerate
@@ -55,7 +51,6 @@ int main(int argc, char** argv)
 
 	DEBUG_MSG("Calling Cleanup");
 	game->CleanUp();
-	game->UnloadContent();
 	
 	return 0;
 }

@@ -5,6 +5,7 @@
 
 using namespace std;
 
+Grid* Game::_Grid = nullptr;
 queue<NPC*>Game::_jobs = queue<NPC*>();
 int Game::_mutex = 1;
 bool Game::_lock = false;
@@ -39,17 +40,16 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 		cameraRectangle.w = width;
 		cameraRectangle.h = height;
 
+		_Grid = new Grid();
 		_npcs = vector<NPC*>();
-		_tiles = vector<vector<Tile*>>();
 
 		_level = new Level(_currentLevel);
-		_level->Initialize(_player, _npcs, _tiles, worldBottomRightCorner, width, height);
+		_level->Initialize(_player, _npcs, _Grid->getTiles(), worldBottomRightCorner, width, height);
 
 		_camera = new Camera();
 		_camera->Initialize(cameraRectangle, worldBottomRightCorner);
 
 		_npcs.shrink_to_fit();
-		_tiles.shrink_to_fit();
 
 		for (int i = 0; i < 8; i++)
 		{
@@ -96,27 +96,12 @@ bool Game::SetupSDL(const char* title, int xpos, int ypos, int width, int height
 	return true;
 }
 
-void Game::LoadContent()
-{
-	DEBUG_MSG("Loading Content - Nothing to load :(");
-}
-
 void Game::Render()
 {
 	SDL_RenderClear(_renderer);
 
-	int cameraLeftPosition = _camera->getRectangle().x / _level->getTileSize();
-	int cameraBottomPosition = _camera->getRectangle().y / _level->getTileSize();
-	int cameraRightPosition = (_camera->getRectangle().x + _camera->getRectangle().w) / _level->getTileSize();
-	int cameraTopPosition = (_camera->getRectangle().y + _camera->getRectangle().h) / _level->getTileSize();
-
-	for (int i = cameraLeftPosition; i < cameraRightPosition; i++)
-	{
-		for (int j = cameraBottomPosition; j < cameraTopPosition; j++)
-		{
-			_tiles[i][j]->Render(_renderer, _camera->getRectangle());
-		}
-	}
+	_Grid->Render(_renderer, _camera->getRectangle(), _level->getTileSize());
+	
 
 	for (int i = 0; i < _npcs.size(); i++)
 	{
@@ -135,7 +120,7 @@ void Game::Update()
 	unsigned int deltaTime = currentTime - _lastTime;//time since last update
 
 
-	_player->Update(_tiles, _level->getTileSize(), deltaTime);
+	_player->Update(_Grid->getTiles(), _level->getTileSize(), deltaTime);
 
 
 	for (int i = 0; i < _npcs.size(); i++)
@@ -176,7 +161,7 @@ int Game::Worker(void* ptr)
 		if (npc != nullptr)
 		{
 			DEBUG_MSG("Calculating A*...");
-			npc->CalculateAstar();
+			_Grid->CalculateAstar();
 		}
 	}
 }
@@ -256,11 +241,6 @@ void Game::HandleEvents()
 bool Game::IsRunning()
 {
 	return _running;
-}
-
-void Game::UnloadContent()
-{
-	DEBUG_MSG("Unloading Content");
 }
 
 void Game::CleanUp()

@@ -7,6 +7,7 @@
 #include "NPC.h"
 #include "Level.h"
 #include "Camera.h"
+#include "Grid.h"
 
 #include <SDL.h>
 #include <vector>
@@ -21,8 +22,6 @@ public:
 	bool					Initialize(const char* title, int xpos, int ypos, int width, int height, int flags);
 	bool					SetupSDL(const char* title, int xpos, int ypos, int width, int height, int flags);
 
-	void					LoadContent();
-	void					UnloadContent();
 	void					Render();
 	void					Update();
 	void					HandleEvents();
@@ -43,10 +42,6 @@ private:
 	Camera*					_camera;
 	Player*					_player;
 	vector<NPC*>			_npcs;
-	vector<vector<Tile*>>	_tiles;
-
-	SDL_Rect				_playerSpawnArea;
-	SDL_Rect				_NPCSpawnArea;
 
 	unsigned int			_lastTime;//time of last update;
 	int						_currentLevel;
@@ -54,6 +49,7 @@ private:
 	int						_arrive[8] = { 0 };
 	int						_continue[8] = { 0 };
 
+	static Grid*			_Grid;
 	static queue<NPC*>		_jobs;
 	static int				_mutex;
 	static bool				_lock;
