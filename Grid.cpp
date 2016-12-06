@@ -7,6 +7,10 @@ Grid::Grid()
 	
 }
 
+//implement regions
+//impelent waypoints
+//implement A*
+
 Grid::~Grid()
 {
 	DEBUG_MSG("Destructing Grid");
@@ -34,19 +38,16 @@ void Grid::Render(SDL_Renderer*& renderer, const SDL_Rect& cameraRectangle, int 
 	}
 }
 
-void Grid::CalculateAstar()
+vector<Tile*> Grid::CalculateAstar()
 {
+	vector<Tile*> path = vector<Tile*>();
 	DEBUG_MSG("Calculating A*...");
 
 	_closedList.clear();
 	//_openList.push;
 
 	DEBUG_MSG("... A* Finished");
-}
-
-void Grid::TakeTile(SDL_Rect takenRectangle)
-{
-
+	return path;
 }
 
 vector<vector<Tile*>>& Grid::getTiles()

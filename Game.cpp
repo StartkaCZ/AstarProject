@@ -7,8 +7,7 @@ using namespace std;
 
 Grid* Game::_Grid = nullptr;
 queue<NPC*>Game::_jobs = queue<NPC*>();
-int Game::_mutex = 1;
-bool Game::_lock = false;
+SDL_semaphore* Game::_semaphore = SDL_CreateSemaphore(1);
 
 Game::Game() 
 	: _running(false)
@@ -28,7 +27,7 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 	
 	if (_running)
 	{
-		_currentLevel = 0;
+		_currentLevel = 1;
 		DEBUG_MSG("LEVEL: ");
 		DEBUG_MSG(_currentLevel);
 
@@ -99,7 +98,7 @@ bool Game::SetupSDL(const char* title, int xpos, int ypos, int width, int height
 void Game::Render()
 {
 	SDL_RenderClear(_renderer);
-
+	
 	_Grid->Render(_renderer, _camera->getRectangle(), _level->getTileSize());
 	
 
@@ -122,6 +121,10 @@ void Game::Update()
 
 	_player->Update(_Grid->getTiles(), _level->getTileSize(), deltaTime);
 
+	for (int i = 0; i < _npcs.size(); i++)
+	{
+		_npcs[i]->Update(_level->getTileSize(), deltaTime);
+	}
 
 	for (int i = 0; i < _npcs.size(); i++)
 	{
@@ -137,51 +140,23 @@ int Game::Worker(void* ptr)
 {
 	while (true)
 	{
-		
 		NPC* npc = nullptr;
-
-		P();
-
-		while (_lock)
-		{
-		}
 		
-		_lock = true;
+
+		SDL_SemWait(_semaphore);
 		if (_jobs.size() > 0)
 		{
-			//DEBUG_MSG("Inside:");
 			npc = _jobs.front();
 			_jobs.pop();
-			//DEBUG_MSG("Done:");
 		}
-		_lock = false;
+		SDL_SemPost(_semaphore);
 
-		V();
 
 		if (npc != nullptr)
 		{
-			DEBUG_MSG("Calculating A*...");
-			_Grid->CalculateAstar();
+			npc->SetPath(_Grid->CalculateAstar());
 		}
 	}
-}
-
-void Game::P()
-{
-	DEBUG_MSG("Mutex: ");
-	DEBUG_MSG(_mutex);
-
-	while (_mutex == 0)
-	{
-		//await
-		DEBUG_MSG("Waiting...");
-	}
-
-	_mutex--;
-}
-void Game::V()
-{
-	_mutex++;
 }
 
 void Game::HandleEvents()

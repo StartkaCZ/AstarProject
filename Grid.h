@@ -12,11 +12,10 @@ public:
 	Grid();
 	~Grid();
 
-	void						CalculateAstar();
+	vector<Tile*>				CalculateAstar();
 
 	void						Update();
 	void						Render(SDL_Renderer*& sdl_renderer, const SDL_Rect& camera, int tileSize);
-	void						TakeTile(SDL_Rect takenRectangle);
 
 	vector<vector<Tile*>>&		getTiles();
 

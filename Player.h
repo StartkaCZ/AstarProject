@@ -18,12 +18,13 @@ public:
 	void		Update() override;
 	void		Update(vector<vector<Tile*>>& tiles, int tileSize, int dt);
 
+	void		CleanUp() override;
+
+private:
 	void		Wonder(vector<vector<Tile*>>& tiles, int tileSize);
 	void		Move(Tile* tile, bool& canMoveToTile, Direction randomDirection);
 
 	void		Interpolate();
-
-	void		CleanUp() override;
 
 private:
 	Direction	_lastDirectionMoved;

@@ -28,8 +28,6 @@ public:
 	bool					IsRunning();
 	void					CleanUp();
 
-	static void				P(); //used to delay process
-	static void				V(); //used to signal occurance
 	static int				Worker(void*);
 
 private:
@@ -51,8 +49,7 @@ private:
 
 	static Grid*			_Grid;
 	static queue<NPC*>		_jobs;
-	static int				_mutex;
-	static bool				_lock;
+	static SDL_semaphore*	_semaphore;
 };
 
 
