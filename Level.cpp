@@ -250,3 +250,8 @@ int	Level::getTileSize() const
 {
 	return _tileSize;
 }
+
+int Level::getMaxWalls() const
+{
+	return _maxWalls;
+}

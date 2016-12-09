@@ -25,6 +25,7 @@ public:
 	SDL_Color				CreateColour(const Tile* tile, bool isPlayer);
 
 	int						getTileSize() const;
+	int						getMaxWalls() const;
 
 private:
 	int						_maxRowCol;

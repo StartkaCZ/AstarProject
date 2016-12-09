@@ -45,6 +45,8 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 		_level = new Level(_currentLevel);
 		_level->Initialize(_player, _npcs, _Grid->getTiles(), worldBottomRightCorner, width, height);
 
+		_Grid->Optimize(_level->getMaxWalls());
+
 		_camera = new Camera();
 		_camera->Initialize(cameraRectangle, worldBottomRightCorner);
 
@@ -140,6 +142,11 @@ int Game::Worker(void* ptr)
 {
 	while (true)
 	{
+		while (_jobs.size() == 0)
+		{
+
+		}
+
 		NPC* npc = nullptr;
 		
 

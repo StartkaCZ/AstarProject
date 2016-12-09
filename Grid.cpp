@@ -3,6 +3,8 @@
 Grid::Grid()
 	: _closedList(list<Tile>())
 	, _openList(priority_queue<Tile>())
+	, _regions(vector<Region*>())
+	, _waypoints(vector<WayPoint*>())
 {
 	
 }
@@ -14,6 +16,57 @@ Grid::Grid()
 Grid::~Grid()
 {
 	DEBUG_MSG("Destructing Grid");
+}
+
+void Grid::Optimize(int maxWalls)
+{
+	SetupWayPoints(maxWalls);
+	SetupRegions(maxWalls);
+}
+
+void Grid::SetupWayPoints(int maxWalls)
+{
+	for (int i = 0; i < _tiles.size(); i++)
+	{
+		for (int i = 0; i < _tiles[i].size(); i++)
+		{
+
+		}
+	}
+}
+
+void Grid::SetupRegions(int maxWalls)
+{
+	int startingIndex = 0;
+	int regions = maxWalls;
+
+	//From begining till the last wall
+	while (_regions.size() < regions)
+	{
+		Region* region = new Region();
+		region->fromIndex = 0;
+
+		for (int i = startingIndex + 1; i < _tiles.size(); i++)
+		{
+			if (_tiles[i][1]->getType() == Tile::Type::Wall)
+			{
+				region->toIndex = startingIndex = i;
+			}
+		}
+
+		region->containsPlayer = false;
+
+		_regions.push_back(region);
+	}
+
+	//Last Region
+	Region* region = new Region();
+
+	region->fromIndex = startingIndex;
+	region->toIndex = _tiles[0].size();
+	region->containsPlayer = false;
+
+	_regions.push_back(region);
 }
 
 void Grid::Update()

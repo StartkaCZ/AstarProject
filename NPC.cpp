@@ -80,12 +80,15 @@ void NPC::Move()
 
 void NPC::SetPath(vector<Tile*> newPath)
 {
-	_pathComplete = false;
-	_path = newPath;
-
-	if (!_path[1]->getOccupied())
+	if (newPath.size() > 0)
 	{
-		Move();
+		_pathComplete = false;
+		_path = newPath;
+
+		if (!_path[1]->getOccupied())
+		{
+			Move();
+		}
 	}
 }
 
