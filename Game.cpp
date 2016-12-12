@@ -1,18 +1,22 @@
 #include <Game.h>
 #include <iostream>
+#include <sstream>
+#include <assert.h>
 
 #include "LTimer.h"
 
 using namespace std;
 
-Grid* Game::_Grid = nullptr;
-queue<NPC*>Game::_jobs = queue<NPC*>();
+
 SDL_semaphore* Game::_semaphore = SDL_CreateSemaphore(1);
 
 Game::Game() 
 	: _running(false)
 	, _player(nullptr)
 	, _camera(nullptr)
+	, _Grid(nullptr)
+	, _jobs(queue<NPC*>())
+	, _threadJobDoneLog(new map<string, int>())
 {
 }
 
@@ -27,7 +31,7 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 	
 	if (_running)
 	{
-		_currentLevel = 1;
+		_currentLevel = 0;
 		DEBUG_MSG("LEVEL: ");
 		DEBUG_MSG(_currentLevel);
 
@@ -45,16 +49,38 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 		_level = new Level(_currentLevel);
 		_level->Initialize(_player, _npcs, _Grid->getTiles(), worldBottomRightCorner, width, height);
 
-		_Grid->Optimize(_level->getMaxWalls());
+		//_Grid->Optimize(_level->getMaxWalls());
 
 		_camera = new Camera();
 		_camera->Initialize(cameraRectangle, worldBottomRightCorner);
 
 		_npcs.shrink_to_fit();
 
+		Data* data = new Data(_Grid, _jobs);
+
 		for (int i = 0; i < 8; i++)
 		{
-			SDL_Thread* worker = SDL_CreateThread(Worker, "Worker" + i, (void*)NULL);
+			std::ostringstream oss;
+			oss << i;
+			
+			string threadName = "Worker" + oss.str();
+
+			std::pair<string, int> jobDoneLog = std::pair<string, int>(threadName, 0);
+			_threadJobDoneLog->insert(jobDoneLog);
+
+			Logger* logger = new Logger(_threadJobDoneLog);
+			logger->threadName = threadName;
+			logger->data = data;
+
+			
+			SDL_Thread* worker = SDL_CreateThread(Worker, threadName.c_str(), logger);
+		}
+			
+		
+
+		for (int i = 0; i < _npcs.size(); i++)
+		{
+			_jobs.push(_npcs[i]);
 		}
 	}
 
@@ -130,7 +156,7 @@ void Game::Update()
 
 	for (int i = 0; i < _npcs.size(); i++)
 	{
-		_jobs.push(_npcs[i]);
+	//	_jobs.push(_npcs[i]);
 	}
 
 
@@ -140,28 +166,33 @@ void Game::Update()
 
 int Game::Worker(void* ptr)
 {
+	Logger* logger = static_cast<Logger*>(ptr);
+
 	while (true)
 	{
-		while (_jobs.size() == 0)
+		while (logger->data->jobs.size() == 0)
 		{
 
 		}
 
+
 		NPC* npc = nullptr;
-		
+
 
 		SDL_SemWait(_semaphore);
-		if (_jobs.size() > 0)
+		if (logger->data->jobs.size() > 0)
 		{
-			npc = _jobs.front();
-			_jobs.pop();
+			logger->threadJobDoneCounter->at(logger->threadName)++;
+
+			npc = logger->data->jobs.front();
+			logger->data->jobs.pop();
 		}
 		SDL_SemPost(_semaphore);
 
 
 		if (npc != nullptr)
 		{
-			npc->SetPath(_Grid->CalculateAstar());
+			npc->SetPath(logger->data->grid->CalculateAstar());
 		}
 	}
 }
@@ -227,6 +258,19 @@ bool Game::IsRunning()
 
 void Game::CleanUp()
 {
+	for (int i = 0; i < 8; i++)
+	{
+		std::ostringstream oss;
+		oss << i;
+
+		string threadName = "Worker" + oss.str();
+
+		DEBUG_MSG(threadName);
+		DEBUG_MSG("Worked");
+		DEBUG_MSG(_threadJobDoneLog->at(threadName));
+	}
+	
+
 	DEBUG_MSG("Cleaning Up");
 	SDL_DestroyWindow(_window);
 	SDL_DestroyRenderer(_renderer);

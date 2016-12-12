@@ -1,23 +1,18 @@
 #include "Grid.h"
 
 Grid::Grid()
-	: _closedList(list<Tile>())
-	, _openList(priority_queue<Tile>())
-	, _regions(vector<Region*>())
-	, _waypoints(vector<WayPoint*>())
+	//: _regions(vector<Region*>())
+	//, _waypoints(vector<WayPoint*>())
 {
 	
 }
 
-//implement regions
-//impelent waypoints
-//implement A*
 
 Grid::~Grid()
 {
 	DEBUG_MSG("Destructing Grid");
 }
-
+/*
 void Grid::Optimize(int maxWalls)
 {
 	SetupWayPoints(maxWalls);
@@ -26,13 +21,56 @@ void Grid::Optimize(int maxWalls)
 
 void Grid::SetupWayPoints(int maxWalls)
 {
-	for (int i = 0; i < _tiles.size(); i++)
-	{
-		for (int i = 0; i < _tiles[i].size(); i++)
-		{
+	int wayPointCount = maxWalls * 2;
+	int indexerX = 1;
+	bool bottomToTop = false;
 
+	while (_waypoints.size() < wayPointCount)
+	{
+		if (bottomToTop)
+		{
+			WallBottomToTop(indexerX, wayPointCount);
+			bottomToTop = true;
+		}
+		else
+		{
+			WallTopToBottom(indexerX, wayPointCount);
+			bottomToTop = false;
 		}
 	}
+}
+
+void Grid::WallBottomToTop(int indexerX, int wayPointCount)
+{
+	for (int i = indexerX; i < _tiles.size(); i++)
+	{
+		if (_tiles[i][1]->getType() == Tile::Type::Wall)
+		{
+			int indexerY = 1;
+
+			for (int j = 1; j < _tiles[i].size(); j++)
+			{
+				if (_tiles[i][j]->getType() == Tile::Type::Empty)
+				{
+					indexerY = j;
+					break;
+				}
+			}
+
+			int centerYspace = indexerY + (_tiles[i].size() - 1 - indexerY) * 0.5f;
+			int centerXspace = (i - indexerX) * 0.5f;
+
+			WayPoint* wayPoint = new WayPoint();
+			wayPoint->row = centerXspace;
+			wayPoint->col = centerYspace;
+
+			_waypoints.push_back(wayPoint);
+		}
+	}
+}
+void Grid::WallTopToBottom(int indexerX, int wayPointCount)
+{
+
 }
 
 void Grid::SetupRegions(int maxWalls)
@@ -44,13 +82,13 @@ void Grid::SetupRegions(int maxWalls)
 	while (_regions.size() < regions)
 	{
 		Region* region = new Region();
-		region->fromIndex = 0;
+		region->fromIndexX = 0;
 
 		for (int i = startingIndex + 1; i < _tiles.size(); i++)
 		{
 			if (_tiles[i][1]->getType() == Tile::Type::Wall)
 			{
-				region->toIndex = startingIndex = i;
+				region->toIndexX = startingIndex = i;
 			}
 		}
 
@@ -62,13 +100,13 @@ void Grid::SetupRegions(int maxWalls)
 	//Last Region
 	Region* region = new Region();
 
-	region->fromIndex = startingIndex;
-	region->toIndex = _tiles[0].size();
+	region->fromIndexX = startingIndex;
+	region->toIndexX = _tiles[0].size();
 	region->containsPlayer = false;
 
 	_regions.push_back(region);
 }
-
+*/
 void Grid::Update()
 {
 	
@@ -93,6 +131,9 @@ void Grid::Render(SDL_Renderer*& renderer, const SDL_Rect& cameraRectangle, int 
 
 vector<Tile*> Grid::CalculateAstar()
 {
+	list<Tile>					_closedList;
+	priority_queue<Tile>		_openList;
+
 	vector<Tile*> path = vector<Tile*>();
 	DEBUG_MSG("Calculating A*...");
 

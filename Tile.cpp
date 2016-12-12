@@ -1,6 +1,8 @@
 #include <Tile.h>
 
 Tile::Tile()
+	: _checked(false)
+	, _isOccupied(false)
 {
 	//DEBUG_MSG("Constructing Tile");
 }
@@ -12,7 +14,6 @@ Tile::~Tile()
 
 void Tile::Initialize(SDL_Rect rectangle, Type type)
 {
-	//DEBUG_MSG("Tile Initializing");
 	ChangeTile(type);
 
 	GameObject::Initialize(rectangle, _colour);
@@ -93,15 +94,24 @@ void Tile::CleanUp()
 	DEBUG_MSG("Cleaning Up Tile");
 }
 
+void Tile::SetChecked(bool checked)
+{
+	_checked = checked;
+}
 void Tile::SetOccupied(bool isOccupied)
 {
 	_isOccupied = isOccupied;
 }
 
+bool Tile::getChecked() const
+{
+	return _checked;
+}
 bool Tile::getOccupied() const
 {
 	return _isOccupied;
 }
+
 Tile::Type Tile::getType() const
 {
 	return _type;

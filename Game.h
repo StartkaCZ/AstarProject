@@ -12,9 +12,38 @@
 #include <SDL.h>
 #include <vector>
 #include <queue>
+#include <map>
 
 class Game
 {
+private:
+	struct Data
+	{
+		Data(Grid* g, queue<NPC*>& j)
+			: grid(g)
+			, jobs(j)
+		{
+
+		}
+
+		Grid*				grid;
+		queue<NPC*>&		jobs;
+	};
+
+	struct Logger
+	{
+		Logger(map<string, int>* l)
+			: threadJobDoneCounter(l)
+		{
+
+		}
+
+		Data* data;
+
+		map<string, int>*		threadJobDoneCounter;
+		string					threadName;
+	};
+
 public:
 							Game();
 							~Game();
@@ -36,10 +65,15 @@ private:
 	SDL_Window*				_window;
 	SDL_Renderer*			_renderer;
 
+	Grid*					_Grid;
 	Level*					_level;
 	Camera*					_camera;
 	Player*					_player;
+
 	vector<NPC*>			_npcs;
+	queue<NPC*>				_jobs;
+
+	map<string, int>*		_threadJobDoneLog;
 
 	unsigned int			_lastTime;//time of last update;
 	int						_currentLevel;
@@ -47,8 +81,6 @@ private:
 	int						_arrive[8] = { 0 };
 	int						_continue[8] = { 0 };
 
-	static Grid*			_Grid;
-	static queue<NPC*>		_jobs;
 	static SDL_semaphore*	_semaphore;
 };
 

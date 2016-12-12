@@ -24,12 +24,15 @@ public:
 	void	CleanUp() override;
 	
 	void	SetOccupied(bool isOccupied);
+	void	SetChecked(bool checked);
 
 	Type	getType() const;
 	bool	getOccupied() const;
+	bool	getChecked() const;
 
 private:
 	Type	_type;
 	bool	_isOccupied;
+	bool	_checked;
 };
 #endif

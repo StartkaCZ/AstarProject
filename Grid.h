@@ -8,7 +8,7 @@
 
 class Grid
 {
-	struct WayPoint
+	/*struct WayPoint
 	{
 		int row;
 		int col;
@@ -19,17 +19,19 @@ class Grid
 
 	struct Region
 	{
-		int		fromIndex;
-		int		toIndex;
+		int		fromIndexX;
+		int		toIndexX;
 
 		bool	containsPlayer;
-	};
+
+		vector<WayPoint> wayPoints;
+	};*/
 
 public:
 	Grid();
 	~Grid();
 
-	void						Optimize(int maxWalls);
+	//void						Optimize(int maxWalls);
 
 	void						Update();
 	void						Render(SDL_Renderer*& sdl_renderer, const SDL_Rect& camera, int tileSize);
@@ -37,15 +39,16 @@ public:
 	vector<Tile*>				CalculateAstar();
 	vector<vector<Tile*>>&		getTiles();
 
+/*
 private:
 	void						SetupRegions(int maxWalls);
 	void						SetupWayPoints(int maxWalls);
 
+	void						WallBottomToTop(int indexerX, int wayPointCount);
+	void						WallTopToBottom(int indexerX, int wayPointCount);
+*/
 private:
 	vector<vector<Tile*>>		_tiles;
-	vector<WayPoint*>			_waypoints;
-	vector<Region*>				_regions;
-
-	list<Tile>					_closedList;
-	priority_queue<Tile>		_openList;
+	//vector<WayPoint*>			_waypoints;
+	//vector<Region*>			_regions;
 };

@@ -51,6 +51,9 @@ int main(int argc, char** argv)
 
 	DEBUG_MSG("Calling Cleanup");
 	game->CleanUp();
+
+
+	system("PAUSE");
 	
 	return 0;
 }
