@@ -27,6 +27,18 @@ class Grid
 		vector<WayPoint> wayPoints;
 	};*/
 
+	
+
+	struct TileComparer
+	{
+		string threadName;
+
+		bool operator()(Tile* lhs, Tile* rhs)
+		{//from lowest to highest
+			return lhs->getNodeData()[threadName].f > rhs->getNodeData()[threadName].f;
+		}
+	};
+
 public:
 	Grid();
 	~Grid();
@@ -38,8 +50,11 @@ public:
 
 	void						Destroy();
 
-	vector<Tile*>				CalculateAstar();
+	vector<Tile*>				CalculateAstar(int goalX, int goalY, int startX, int startY, int tileSize, string threadName);
 	vector<vector<Tile*>>&		getTiles();
+
+	vector<Tile*>				getConnections(int currentX, int currentY, string threadName);
+	pair<string, Tile::NodeData> getNodeData(string threadName, int iX, int iY, int piX, int piY, float g, float h, float f, bool c);
 
 /*
 private:

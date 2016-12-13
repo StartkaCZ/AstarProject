@@ -1,7 +1,7 @@
 #include <Tile.h>
 
 Tile::Tile()
-	: _checked(false)
+	: _nodeData(map<string, NodeData>())
 	, _isOccupied(false)
 {
 	//DEBUG_MSG("Constructing Tile");
@@ -60,6 +60,21 @@ void Tile::ChangeTile(Type type)
 		_colour.a = 255;
 		break;
 
+
+	case Tile::Type::ClosedList:
+		_colour.g = 0;
+		_colour.r = 125;
+		_colour.b = 200;
+		_colour.a = 255;
+		break;
+
+	case Tile::Type::Path:
+		_colour.g = 255;
+		_colour.r = 255;
+		_colour.b = 255;
+		_colour.a = 255;
+		break;
+
 	default:
 		break;
 	}
@@ -94,18 +109,14 @@ void Tile::CleanUp()
 	DEBUG_MSG("Cleaning Up Tile");
 }
 
-void Tile::SetChecked(bool checked)
-{
-	_checked = checked;
-}
 void Tile::SetOccupied(bool isOccupied)
 {
 	_isOccupied = isOccupied;
 }
 
-bool Tile::getChecked() const
+map<string, Tile::NodeData>& Tile::getNodeData()
 {
-	return _checked;
+	return _nodeData;
 }
 bool Tile::getOccupied() const
 {

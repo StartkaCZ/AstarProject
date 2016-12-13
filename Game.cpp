@@ -20,7 +20,7 @@ Game::Game()
 	, _data(nullptr)
 	, _threads(vector<SDL_Thread*>())
 	, _npcs(vector<NPC*>())
-	, _jobs(queue<NPC*>())
+	, _jobs(queue<Job*>())
 	, _threadJobDoneLog(new map<string, int>())
 {
 }
@@ -52,7 +52,6 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 
 		_camera = new Camera();
 		_camera->Initialize(cameraRectangle, worldBottomRightCorner);
-
 	}
 
 	return _running;
@@ -102,12 +101,12 @@ void Game::CreateWorld(int& worldBottomRightCorner)
 
 	_npcs.shrink_to_fit();
 
-	_data = new Data(_Grid, _jobs);
+	_data = new Data(_Grid, _jobs, _level->getTileSize());
 
 	_threadsFinished = 0;
 	_canWork = SDL_TRUE;
 	
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 1; i++)
 	{
 		std::ostringstream oss;
 		oss << i;
@@ -129,7 +128,15 @@ void Game::CreateWorld(int& worldBottomRightCorner)
 
 	for (int i = 0; i < _npcs.size(); i++)
 	{
-		_jobs.push(_npcs[i]);
+		//_jobs.push(getJob(i));
+
+		_npcs[i]->SetPath(
+			_Grid->CalculateAstar(_player->getRectangle().x,
+				_player->getRectangle().y,
+				_npcs[i]->getRectangle().x,
+				_npcs[i]->getRectangle().y,
+				_level->getTileSize(),
+				"Test"));
 	}
 }
 
@@ -157,7 +164,7 @@ void Game::Update()
 	unsigned int deltaTime = currentTime - _lastTime;//time since last update
 
 
-	_player->Update(_Grid->getTiles(), _level->getTileSize(), deltaTime);
+	//_player->Update(_Grid->getTiles(), _level->getTileSize(), deltaTime);
 
 	for (int i = 0; i < _npcs.size(); i++)
 	{
@@ -174,43 +181,52 @@ void Game::Update()
 	_lastTime = currentTime;
 }
 
+Game::Job* Game::getJob(int i)
+{
+	Job* job = new Job();
+
+	job->_npc = _npcs[i];
+	job->playerX = _player->getRectangle().x;
+	job->playerY = _player->getRectangle().y;
+
+	return job;
+}
+
 int Game::Worker(void* ptr)
 {
 	Logger* logger = static_cast<Logger*>(ptr);
 
-	while (true)
+	while (_canWork)
 	{
-		while (logger->data->jobs.size() == 0)
+		/*if (logger->data->jobs.size() > 0 && _canWork)
 		{
-			if (!_canWork)
+			Job* job = nullptr;
+
+
+			SDL_SemWait(_semaphore);
+			if (logger->data->jobs.size() > 0)
 			{
-				break;
+				logger->threadJobDoneCounter->at(logger->threadName)++;
+
+				job = logger->data->jobs.front();
+				logger->data->jobs.pop();
 			}
-		}
-
-		if (!_canWork)
-		{
-			break;
-		}
-
-		NPC* npc = nullptr;
+			SDL_SemPost(_semaphore);
 
 
-		SDL_SemWait(_semaphore);
-		if (logger->data->jobs.size() > 0)
-		{
-			logger->threadJobDoneCounter->at(logger->threadName)++;
-
-			npc = logger->data->jobs.front();
-			logger->data->jobs.pop();
-		}
-		SDL_SemPost(_semaphore);
-
-
-		if (npc != nullptr)
-		{
-			npc->SetPath(logger->data->grid->CalculateAstar());
-		}
+			if (job != nullptr)
+			{
+				job->_npc->SetPath(
+					logger->data->grid->CalculateAstar(job->playerX, 
+													   job->playerY, 
+													   job->_npc->getRectangle().x, 
+													   job->_npc->getRectangle().y, 
+													   logger->data->tileSize,
+													   logger->threadName) );
+				
+				delete job;
+			}
+		}*/
 	}
 
 	while (SDL_LockMutex(_mutex) != 0)
@@ -219,6 +235,7 @@ int Game::Worker(void* ptr)
 	}
 
 	_threadsFinished++;
+
 	SDL_UnlockMutex(_mutex);
 	DEBUG_MSG("FINISHED");
 
@@ -301,7 +318,7 @@ bool Game::IsRunning()
 
 void Game::NewLevel(int level)
 {
-	//PrintThreadJobsDone();
+	PrintThreadJobsDone();
 
 	SDL_UnlockMutex(_mutex);
 	_canWork = SDL_FALSE;
@@ -356,11 +373,12 @@ void Game::NewLevel(int level)
 
 	int worldBottomRightCorner = 0;
 	CreateWorld(worldBottomRightCorner);
+	_camera->ReInitialize(worldBottomRightCorner);
 }
 
 void Game::CleanUp()
 {
-	//PrintThreadJobsDone();
+	PrintThreadJobsDone();
 
 	DEBUG_MSG("Cleaning Up");
 	SDL_DestroyWindow(_window);
@@ -370,7 +388,7 @@ void Game::CleanUp()
 
 void Game::PrintThreadJobsDone()
 {
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < _threadJobDoneLog->size(); i++)
 	{
 		std::ostringstream oss;
 		oss << i;
@@ -382,7 +400,7 @@ void Game::PrintThreadJobsDone()
 		DEBUG_MSG(_threadJobDoneLog->at(threadName));
 	}
 
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < _threadJobDoneLog->size(); i++)
 	{
 		std::ostringstream oss;
 		oss << i;

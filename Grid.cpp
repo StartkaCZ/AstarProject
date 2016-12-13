@@ -144,19 +144,213 @@ void Grid::Destroy()
 	_tiles.clear();
 }
 
-vector<Tile*> Grid::CalculateAstar()
+vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY, int tileSize, string threadName)
 {
-	list<Tile>					_closedList;
-	priority_queue<Tile>		_openList;
+	TileComparer comparer = TileComparer();
+	comparer.threadName = threadName;
 
+	//switch bool _checked into a map of bools
+	priority_queue<Tile*, vector<Tile*>, TileComparer> _openList = priority_queue<Tile*, vector<Tile*>, TileComparer>(comparer);
+	list<Tile*> _closedList = list<Tile*>();
 	vector<Tile*> path = vector<Tile*>();
-	DEBUG_MSG("Calculating A*...");
+	
+	startX /= tileSize;
+	startY /= tileSize;
+
+	goalX /= tileSize;
+	goalY /= tileSize;
 
 	_closedList.clear();
-	//_openList.push;
+	
+	Tile* start = _tiles[startX][startY];
+	start->getNodeData().insert(getNodeData(threadName, startX, startY, -1, -1, 0, 0, 0, true));
+	
+	Tile* goal = _tiles[goalX][goalY];
+	goal->getNodeData().insert(getNodeData(threadName, goalX, goalY, -1, -1, 999999, 0, -1, false));
+	
+	_openList.push(start);
 
+	DEBUG_MSG("Calculating A*...");
+	
+	while (start != goal)
+	{
+		//Take best node B from open list
+		Tile* b = _openList.top();
+
+		int g = 0;
+		int h = 0;
+		int f = 0;
+
+		vector<Tile*> connections = getConnections(b->getNodeData()[threadName].indexX, b->getNodeData()[threadName].indexY, threadName);
+		for (int i = 0; i < connections.size(); i++)
+		{//For each node N connected to B
+			Tile* n = connections[i];
+
+			//Assign F, G and H values for N
+			g = b->getNodeData()[threadName].g + 1;
+			h = abs(goalX - n->getNodeData()[threadName].indexX) + abs(goalY - n->getNodeData()[threadName].indexY);
+			f = g + h;
+
+			if (n->getNodeData()[threadName].open)
+			{//If N is in open list then
+				n->getNodeData()[threadName].g = g;
+				n->getNodeData()[threadName].h = h;
+				n->getNodeData()[threadName].f = f;
+
+				if (n->getNodeData()[threadName].g < g)
+				{//If new Path is better then
+				 //Replace old entry for N with new one
+					b->getNodeData()[threadName].parentIndexX = n->getNodeData()[threadName].indexX;
+					b->getNodeData()[threadName].parentIndexY = n->getNodeData()[threadName].indexY;
+				}
+			}
+			else if (n->getNodeData()[threadName].closed)
+			{//If N is in closed list then
+				if (n->getNodeData()[threadName].g < g)
+				{//If new Path is better then
+				 //Replace old entry for N with new one
+					b->getNodeData()[threadName].parentIndexX = n->getNodeData()[threadName].indexX;
+					b->getNodeData()[threadName].parentIndexY = n->getNodeData()[threadName].indexY;
+				}
+			}
+			else
+			{//Else
+				n->getNodeData()[threadName].g = g;
+				n->getNodeData()[threadName].h = h;
+				n->getNodeData()[threadName].f = f;
+
+				//Add N to open list
+				n->getNodeData()[threadName].open = true;
+				_openList.push(n);
+			}
+		}
+
+		if (_openList.empty())
+		{//If open list is empty then there is no solution
+			break;
+		}
+		else if (b == goal)
+		{//If b == Goal then solution found
+			path.push_back(b);
+			_closedList.push_back(b);
+
+			b->ChangeTile(Tile::Type::Path);
+
+			b->getNodeData()[threadName].parentIndexX = _openList.top()->getNodeData()[threadName].parentIndexX;
+			b->getNodeData()[threadName].parentIndexY = _openList.top()->getNodeData()[threadName].parentIndexY;
+
+			int parentX = b->getNodeData()[threadName].parentIndexX;
+			int parentY = b->getNodeData()[threadName].parentIndexY;
+			while (parentX != -1 && parentY != -1)
+			{
+				Tile* step = _tiles[parentX][parentY];
+
+				path.push_back(step);
+				step->ChangeTile(Tile::Type::Path);
+
+				
+				parentX = step->getNodeData()[threadName].parentIndexX;
+				parentY = step->getNodeData()[threadName].parentIndexY;
+			}
+
+			std::reverse(path.begin(), path.end());
+
+			break;
+		}
+
+		//Add B to Closed List
+		_openList.pop();
+		_closedList.push_back(b);
+		b->getNodeData()[threadName].open = false;
+		b->getNodeData()[threadName].closed = true;
+		b->ChangeTile(Tile::Type::ClosedList);
+	}
+	
+	while (_openList.size() != 0)
+	{
+		_closedList.push_back(_openList.top());
+		_openList.pop();
+	}
+
+	list<Tile*>::iterator begin = _closedList.begin();
+	list<Tile*>::const_iterator end = _closedList.end();
+
+	for (; begin != end; begin++)
+	{
+		(*begin)->getNodeData()[threadName] = Tile::NodeData();
+	}
+	
 	DEBUG_MSG("... A* Finished");
+	
 	return path;
+}
+
+vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName)
+{
+	vector<Tile*> connections;
+
+	int indexer = currentX - 1;
+	if (indexer >= 0 && _tiles[indexer][currentY]->getType() != Tile::Type::Wall)
+	{
+		Tile* connection = _tiles[indexer][currentY];
+		
+		connection->getNodeData()[threadName].indexX = indexer;
+		connection->getNodeData()[threadName].indexY = currentY;
+		
+		//connection->getNodeData().insert(getNodeData(threadName, indexer, currentY, currentX, currentY, 0, 0, 0, false));
+
+		connections.push_back(connection);
+	}
+
+	indexer = currentX + 1;
+	if (indexer < _tiles.size() && _tiles[indexer][currentY]->getType() != Tile::Type::Wall)
+	{
+		Tile* connection = _tiles[indexer][currentY];
+
+		connection->getNodeData()[threadName].indexX = indexer;
+		connection->getNodeData()[threadName].indexY = currentY;
+
+		//connection->getNodeData().insert(getNodeData(threadName, indexer, currentY, currentX, currentY, 0, 0, 0, false));
+
+		connections.push_back(connection);
+	}
+
+	indexer = currentY - 1;
+	if (indexer >= 0 && _tiles[currentX][indexer]->getType() != Tile::Type::Wall)
+	{
+		Tile* connection = _tiles[currentX][indexer];
+
+		connection->getNodeData()[threadName].indexX = currentX;
+		connection->getNodeData()[threadName].indexY = indexer;
+
+		//connection->getNodeData().insert(getNodeData(threadName, currentX, indexer, currentX, currentY, 0, 0, 0, false));
+
+		connections.push_back(connection);
+	}
+
+	indexer = currentY + 1;
+	if (indexer < _tiles[currentX].size() && _tiles[currentX][indexer]->getType() != Tile::Type::Wall)
+	{
+		Tile* connection = _tiles[currentX][indexer];
+
+		connection->getNodeData()[threadName].indexX = currentX;
+		connection->getNodeData()[threadName].indexY = indexer;
+
+		//connection->getNodeData().insert(getNodeData(threadName, currentX, indexer, currentX, currentY, 0, 0, 0, false));
+
+		connections.push_back(connection);
+	}
+
+	return connections;
+}
+
+pair<string, Tile::NodeData> Grid::getNodeData(string threadName, int iX, int iY, int piX, int piY, float g, float h, float f, bool c)
+{
+	Tile::NodeData nodeData = Tile::NodeData(iX, iY, piX, piY, g, h, f, c);
+
+	pair<string, Tile::NodeData> pairNodeData = pair<string, Tile::NodeData>(threadName, nodeData);
+	
+	return pairNodeData;
 }
 
 vector<vector<Tile*>>& Grid::getTiles()

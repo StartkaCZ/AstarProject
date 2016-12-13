@@ -14,6 +14,11 @@ void Camera::Initialize(SDL_Rect rectangle, int worldBottomRightCorner)
 	_rectangle = rectangle;
 	_worldBottomRightCorner = worldBottomRightCorner;
 }
+void Camera::ReInitialize(int worldBottomRightCorner)
+{
+	_worldBottomRightCorner = worldBottomRightCorner;
+}
+
 void Camera::Move(Direction direction)
 {
 	switch (direction)
@@ -63,7 +68,6 @@ void Camera::MoveLeft()
 		_rectangle.x -= 50;
 	}
 }
-
 
 SDL_Rect Camera::getRectangle() const
 {

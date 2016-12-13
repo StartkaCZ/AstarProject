@@ -17,17 +17,28 @@
 class Game
 {
 private:
+	struct Job
+	{
+		NPC* _npc;
+
+		int playerX;
+		int playerY;
+	};
+
 	struct Data
 	{
-		Data(Grid* g, queue<NPC*>& j)
+		Data(Grid* g, queue<Job*>& j, int ts)
 			: grid(g)
 			, jobs(j)
+			, tileSize(ts)
 		{
 
 		}
 
 		Grid*				grid;
-		queue<NPC*>&		jobs;
+		queue<Job*>&		jobs;
+
+		int tileSize;
 	};
 
 	struct Logger
@@ -49,20 +60,23 @@ public:
 							~Game();
 
 	bool					Initialize(const char* title, int xpos, int ypos, int width, int height, int flags);
-	bool					SetupSDL(const char* title, int xpos, int ypos, int width, int height, int flags);
-
-	void					CreateWorld(int& worldBottomRightCorner);
-
+	
 	void					Render();
 	void					Update();
 	void					HandleEvents();
 	bool					IsRunning();
-
-	void					PrintThreadJobsDone();
-	void					NewLevel(int level);
 	void					CleanUp();
 
 	static int				Worker(void*);
+
+private:
+	bool					SetupSDL(const char* title, int xpos, int ypos, int width, int height, int flags);
+	void					CreateWorld(int& worldBottomRightCorner);
+
+	void					PrintThreadJobsDone();
+	void					NewLevel(int level);
+
+	Job*					getJob(int i);
 
 private:
 	bool					_running;
@@ -78,7 +92,7 @@ private:
 
 	vector<SDL_Thread*>		_threads;
 	vector<NPC*>			_npcs;
-	queue<NPC*>				_jobs;
+	queue<Job*>				_jobs;
 
 	map<string, int>*		_threadJobDoneLog;
 

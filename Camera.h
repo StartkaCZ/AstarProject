@@ -10,6 +10,7 @@ public:
 				~Camera();
 
 	void		Initialize(SDL_Rect rectangle, int worldBottomRightCorner);
+	void		ReInitialize(int worldBottomRightCorner);
 	void		Move(Direction direction);
 
 	SDL_Rect	getRectangle() const;

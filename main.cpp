@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 	game->CleanUp();
 
 
-	system("PAUSE");
+	//system("PAUSE");
 	
 	return 0;
 }

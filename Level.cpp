@@ -7,14 +7,14 @@ Level::Level(int level)
 	{
 		_worldScale = 1.0f;
 		_maxRowCol = 30;
-		_maxNPC = 5;
+		_maxNPC = 1;// 5;
 		_maxWalls = 3;
 	}
 	else if (level == 1)
 	{
 		_worldScale = 1.0f;
 		_maxRowCol = 100;
-		_maxNPC = 50;
+		_maxNPC = 1;// 50;
 		_maxWalls = 6;
 	}
 	else if (level == 2)
