@@ -9,7 +9,7 @@ Tile::Tile()
 
 Tile::~Tile()
 {
-	DEBUG_MSG("Destructing Tile");
+	//DEBUG_MSG("Destructing Tile");
 }
 
 void Tile::Initialize(SDL_Rect rectangle, Type type)

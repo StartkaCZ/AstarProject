@@ -9,7 +9,7 @@ NPC::NPC()
 
 NPC::~NPC()
 {
-	DEBUG_MSG("Destructing NPC");
+	//DEBUG_MSG("Destructing NPC");
 }
 
 void NPC::Initialize(SDL_Rect rectangle, SDL_Color colour)

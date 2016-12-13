@@ -51,10 +51,15 @@ public:
 	bool					Initialize(const char* title, int xpos, int ypos, int width, int height, int flags);
 	bool					SetupSDL(const char* title, int xpos, int ypos, int width, int height, int flags);
 
+	void					CreateWorld(int& worldBottomRightCorner);
+
 	void					Render();
 	void					Update();
 	void					HandleEvents();
 	bool					IsRunning();
+
+	void					PrintThreadJobsDone();
+	void					NewLevel(int level);
 	void					CleanUp();
 
 	static int				Worker(void*);
@@ -69,7 +74,9 @@ private:
 	Level*					_level;
 	Camera*					_camera;
 	Player*					_player;
+	Data*					_data;
 
+	vector<SDL_Thread*>		_threads;
 	vector<NPC*>			_npcs;
 	queue<NPC*>				_jobs;
 
@@ -82,6 +89,9 @@ private:
 	int						_continue[8] = { 0 };
 
 	static SDL_semaphore*	_semaphore;
+	static SDL_mutex*		_mutex;
+	static SDL_bool			_canWork;
+	static int				_threadsFinished;
 };
 
 

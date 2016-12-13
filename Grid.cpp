@@ -129,6 +129,21 @@ void Grid::Render(SDL_Renderer*& renderer, const SDL_Rect& cameraRectangle, int 
 	}
 }
 
+void Grid::Destroy()
+{
+	for (int i = 0; i < _tiles.size(); i++)
+	{
+		for (int j = 0; j < _tiles[i].size(); j++)
+		{
+			delete _tiles[i][j];
+		}
+
+		_tiles[i].clear();
+	}
+
+	_tiles.clear();
+}
+
 vector<Tile*> Grid::CalculateAstar()
 {
 	list<Tile>					_closedList;

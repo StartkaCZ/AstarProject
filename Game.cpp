@@ -7,7 +7,9 @@
 
 using namespace std;
 
-
+int Game::_threadsFinished = 0;
+SDL_bool Game::_canWork = SDL_TRUE;
+SDL_mutex* Game::_mutex = SDL_CreateMutex();
 SDL_semaphore* Game::_semaphore = SDL_CreateSemaphore(1);
 
 Game::Game() 
@@ -15,6 +17,9 @@ Game::Game()
 	, _player(nullptr)
 	, _camera(nullptr)
 	, _Grid(nullptr)
+	, _data(nullptr)
+	, _threads(vector<SDL_Thread*>())
+	, _npcs(vector<NPC*>())
 	, _jobs(queue<NPC*>())
 	, _threadJobDoneLog(new map<string, int>())
 {
@@ -37,51 +42,17 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 
 		SDL_Rect cameraRectangle = SDL_Rect();
 		int worldBottomRightCorner;
-
+		
 		cameraRectangle.x = 0;
 		cameraRectangle.y = 0;
 		cameraRectangle.w = width;
 		cameraRectangle.h = height;
 
-		_Grid = new Grid();
-		_npcs = vector<NPC*>();
-
-		_level = new Level(_currentLevel);
-		_level->Initialize(_player, _npcs, _Grid->getTiles(), worldBottomRightCorner, width, height);
-
-		//_Grid->Optimize(_level->getMaxWalls());
+		CreateWorld(worldBottomRightCorner);
 
 		_camera = new Camera();
 		_camera->Initialize(cameraRectangle, worldBottomRightCorner);
 
-		_npcs.shrink_to_fit();
-
-		Data* data = new Data(_Grid, _jobs);
-
-		for (int i = 0; i < 8; i++)
-		{
-			std::ostringstream oss;
-			oss << i;
-			
-			string threadName = "Worker" + oss.str();
-
-			std::pair<string, int> jobDoneLog = std::pair<string, int>(threadName, 0);
-			_threadJobDoneLog->insert(jobDoneLog);
-
-			Logger* logger = new Logger(_threadJobDoneLog);
-			logger->threadName = threadName;
-			logger->data = data;
-
-			
-			SDL_Thread* worker = SDL_CreateThread(Worker, threadName.c_str(), logger);
-		}
-			
-		
-
-		for (int i = 0; i < _npcs.size(); i++)
-		{
-			_jobs.push(_npcs[i]);
-		}
 	}
 
 	return _running;
@@ -121,6 +92,45 @@ bool Game::SetupSDL(const char* title, int xpos, int ypos, int width, int height
 	}
 
 	return true;
+}
+void Game::CreateWorld(int& worldBottomRightCorner)
+{
+	_Grid = new Grid();
+
+	_level = new Level(_currentLevel);
+	_level->Initialize(_player, _npcs, _Grid->getTiles(), worldBottomRightCorner, 600, 600);
+
+	_npcs.shrink_to_fit();
+
+	_data = new Data(_Grid, _jobs);
+
+	_threadsFinished = 0;
+	_canWork = SDL_TRUE;
+	
+	for (int i = 0; i < 8; i++)
+	{
+		std::ostringstream oss;
+		oss << i;
+
+		string threadName = "Worker" + oss.str();
+
+		std::pair<string, int> jobDoneLog = std::pair<string, int>(threadName, 0);
+		_threadJobDoneLog->insert(jobDoneLog);
+
+		Logger* logger = new Logger(_threadJobDoneLog);
+		logger->threadName = threadName;
+		logger->data = _data;
+
+
+		SDL_Thread* worker = SDL_CreateThread(Worker, threadName.c_str(), logger);
+		_threads.push_back(worker);
+	}
+
+
+	for (int i = 0; i < _npcs.size(); i++)
+	{
+		_jobs.push(_npcs[i]);
+	}
 }
 
 void Game::Render()
@@ -172,9 +182,16 @@ int Game::Worker(void* ptr)
 	{
 		while (logger->data->jobs.size() == 0)
 		{
-
+			if (!_canWork)
+			{
+				break;
+			}
 		}
 
+		if (!_canWork)
+		{
+			break;
+		}
 
 		NPC* npc = nullptr;
 
@@ -195,6 +212,17 @@ int Game::Worker(void* ptr)
 			npc->SetPath(logger->data->grid->CalculateAstar());
 		}
 	}
+
+	while (SDL_LockMutex(_mutex) != 0)
+	{
+
+	}
+
+	_threadsFinished++;
+	SDL_UnlockMutex(_mutex);
+	DEBUG_MSG("FINISHED");
+
+	return 0;
 }
 
 void Game::HandleEvents()
@@ -243,6 +271,20 @@ void Game::HandleEvents()
 				case SDLK_d:
 					//DEBUG_MSG("Right Key Pressed");
 					_camera->Move(Direction::Right);
+					break;
+
+				case SDLK_1:
+					NewLevel(0);
+					break;
+				case SDLK_2:
+					NewLevel(1);
+					break;
+				case SDLK_3:
+					NewLevel(2);
+					break;
+				case SDLK_0:
+					NewLevel(-1);
+					break;
 
 				default:
 					//SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
@@ -256,7 +298,77 @@ bool Game::IsRunning()
 	return _running;
 }
 
+
+void Game::NewLevel(int level)
+{
+	//PrintThreadJobsDone();
+
+	SDL_UnlockMutex(_mutex);
+	_canWork = SDL_FALSE;
+
+	for (int i = 0; i < _threads.size(); i++)
+	{
+		SDL_DetachThread(_threads[i]);
+	}
+
+	_threads.clear();
+
+	while (_threadsFinished < 8)
+	{
+		
+	}
+	DEBUG_MSG("ALL THREADS FINISHED");
+
+	if (level == -1)
+	{
+		_currentLevel++;
+
+		if (_currentLevel > 2)
+		{
+			_currentLevel = 0;
+		}
+	}
+	else
+	{
+		_currentLevel = level;
+	}
+
+	_Grid->Destroy();
+	delete _Grid;
+
+	delete _level;
+	_level = nullptr;
+	delete _player;
+	_player = nullptr;
+	delete _data;
+	_data = nullptr;
+
+	while (_jobs.size() > 0)
+	{
+		_jobs.pop();
+	}
+
+	for (int i = 0; i < _npcs.size(); i++)
+	{
+		delete _npcs[i];
+	}
+	_npcs.clear();
+
+	int worldBottomRightCorner = 0;
+	CreateWorld(worldBottomRightCorner);
+}
+
 void Game::CleanUp()
+{
+	//PrintThreadJobsDone();
+
+	DEBUG_MSG("Cleaning Up");
+	SDL_DestroyWindow(_window);
+	SDL_DestroyRenderer(_renderer);
+	SDL_Quit();
+}
+
+void Game::PrintThreadJobsDone()
 {
 	for (int i = 0; i < 8; i++)
 	{
@@ -269,10 +381,14 @@ void Game::CleanUp()
 		DEBUG_MSG("Worked");
 		DEBUG_MSG(_threadJobDoneLog->at(threadName));
 	}
-	
 
-	DEBUG_MSG("Cleaning Up");
-	SDL_DestroyWindow(_window);
-	SDL_DestroyRenderer(_renderer);
-	SDL_Quit();
+	for (int i = 0; i < 8; i++)
+	{
+		std::ostringstream oss;
+		oss << i;
+
+		string threadName = "Worker" + oss.str();
+
+		_threadJobDoneLog->at(threadName) = 0;
+	}
 }

@@ -36,6 +36,8 @@ public:
 	void						Update();
 	void						Render(SDL_Renderer*& sdl_renderer, const SDL_Rect& camera, int tileSize);
 
+	void						Destroy();
+
 	vector<Tile*>				CalculateAstar();
 	vector<vector<Tile*>>&		getTiles();
 

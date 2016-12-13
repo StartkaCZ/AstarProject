@@ -7,7 +7,7 @@ GameObject::GameObject()
 
 GameObject::~GameObject()
 {
-	DEBUG_MSG("Character Destructor");
+	//DEBUG_MSG("Character Destructor");
 }
 
 void GameObject::Initialize(SDL_Rect rectangle, SDL_Color colour)
