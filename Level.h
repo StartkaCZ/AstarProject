@@ -34,4 +34,5 @@ private:
 
 	int						_tileSize;
 	float					_worldScale;
+	float					_interpolationTimer;
 };

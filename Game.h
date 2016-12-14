@@ -27,16 +27,15 @@ private:
 
 	struct Data
 	{
-		Data(Grid* g, queue<Job*>& j, int ts)
-			: grid(g)
-			, jobs(j)
-			, tileSize(ts)
+		Data()
+			: grid(nullptr)
+			, jobs(queue<Job*>())
 		{
 
 		}
 
-		Grid*				grid;
-		queue<Job*>&		jobs;
+		Grid*			grid;
+		queue<Job*>		jobs;
 
 		int tileSize;
 	};
@@ -84,7 +83,6 @@ private:
 	SDL_Window*				_window;
 	SDL_Renderer*			_renderer;
 
-	Grid*					_Grid;
 	Level*					_level;
 	Camera*					_camera;
 	Player*					_player;
@@ -92,15 +90,13 @@ private:
 
 	vector<SDL_Thread*>		_threads;
 	vector<NPC*>			_npcs;
-	queue<Job*>				_jobs;
 
 	map<string, int>*		_threadJobDoneLog;
 
 	unsigned int			_lastTime;//time of last update;
 	int						_currentLevel;
-
-	int						_arrive[8] = { 0 };
-	int						_continue[8] = { 0 };
+	bool					_threadIt;
+	bool					_hasThreaded;
 
 	static SDL_semaphore*	_semaphore;
 	static SDL_mutex*		_mutex;

@@ -36,18 +36,29 @@ public:
 		
 		}
 
-		NodeData(int iX, int iY, int piX, int piY, float g, float h, float f, bool o)
-			: indexX(iX)
-			, indexY(iY)
-			, parentIndexX(piX)
-			, parentIndexY(piY)
-			, g(g)
-			, h(h)
-			, f(f)
-			, open(o)
-			, closed(false)
-		{		
-		
+		void SetIndex(int x, int y)
+		{
+			indexX = x;
+			indexY = y;
+		}
+
+		void SetParentIndex(int x, int y)
+		{
+			parentIndexX = x;
+			parentIndexY = y;
+		}
+
+		void Restart()
+		{
+			indexX = -1;
+			indexY = -1;
+			parentIndexX = -1;
+			parentIndexY = -1;
+			g = 999999;
+			h = -1;
+			f = -1;
+			open = false;
+			closed = false;
 		}
 
 		int indexX;

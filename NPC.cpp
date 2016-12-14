@@ -12,7 +12,7 @@ NPC::~NPC()
 	//DEBUG_MSG("Destructing NPC");
 }
 
-void NPC::Initialize(SDL_Rect rectangle, SDL_Color colour)
+void NPC::Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolationTimer)
 {
 	_rectangle = rectangle;
 	_colour = colour;
@@ -22,6 +22,8 @@ void NPC::Initialize(SDL_Rect rectangle, SDL_Color colour)
 
 	_goalX = _initialX;
 	_goalY = _initialY;
+
+	_maxInterpolationTimer = interpolationTimer;
 }
 
 void NPC::Update()
@@ -36,7 +38,7 @@ void NPC::Update(int tileSize, int dt)
 		_pathComplete = true;
 	}
 
-	if (_interpolationTimer > INTERPOLATION_TIMER)
+	if (_interpolationTimer > _maxInterpolationTimer)
 	{
 		if (!_pathComplete && !_path[1]->getOccupied())
 		{
@@ -58,7 +60,7 @@ void NPC::Update(int tileSize, int dt)
 }
 void NPC::Interpolate()
 {
-	float scale = _interpolationTimer / INTERPOLATION_TIMER;
+	float scale = _interpolationTimer / _maxInterpolationTimer;
 
 	_rectangle.x = _initialX + (_goalX - _initialX) * scale;
 	_rectangle.y = _initialY + (_goalY - _initialY) * scale;

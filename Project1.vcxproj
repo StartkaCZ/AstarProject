@@ -89,6 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ConstHolder.h" />
     <ClInclude Include="EnumHolder.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Debug.h" />

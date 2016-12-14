@@ -1,28 +1,35 @@
 #include<Level.h>
 
+#include "ConstHolder.h"
 
 Level::Level(int level)
 {
 	if (level == 0)
 	{
-		_worldScale = 1.0f;
-		_maxRowCol = 30;
-		_maxNPC = 1;// 5;
-		_maxWalls = 3;
+		_worldScale = LEVEL_1_WORLD_SCALE;
+		_maxRowCol = LEVEL_1_MAX_ROW_COL;
+		_maxNPC = LEVEL_1_MAX_NPC;
+		_maxWalls = LEVEL_1_MAX_WALLS;
+
+		_interpolationTimer = LEVEL_1_MAX_INTERPOLATION_TIMER;
 	}
 	else if (level == 1)
 	{
-		_worldScale = 1.0f;
-		_maxRowCol = 100;
-		_maxNPC = 1;// 50;
-		_maxWalls = 6;
+		_worldScale = LEVEL_2_WORLD_SCALE;
+		_maxRowCol = LEVEL_2_MAX_ROW_COL;
+		_maxNPC = LEVEL_2_MAX_NPC;
+		_maxWalls = LEVEL_2_MAX_WALLS;
+
+		_interpolationTimer = LEVEL_2_MAX_INTERPOLATION_TIMER;
 	}
 	else if (level == 2)
 	{
-		_worldScale = 5.0f;
-		_maxRowCol = 1000;
-		_maxNPC = 500;
-		_maxWalls = 18;
+		_worldScale = LEVEL_3_WORLD_SCALE;
+		_maxRowCol = LEVEL_3_MAX_ROW_COL;
+		_maxNPC = LEVEL_3_MAX_NPC;
+		_maxWalls = LEVEL_3_MAX_WALLS;
+
+		_interpolationTimer = LEVEL_3_MAX_INTERPOLATION_TIMER;
 	}
 }
 Level::~Level()
@@ -33,21 +40,33 @@ Level::~Level()
 void Level::Initialize(Player*& player, vector<NPC*>& npcs, vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height)
 {
 	//tiles available = row/col max tiles - (edge + edge) - (spacing for player/NPC area)
-	int spawnAreaTiles = _maxRowCol * 0.2f;
+	int spawnAreaTiles = _maxRowCol * SPAWN_AREA_TILE;
 	int tilesAvailble = _maxRowCol - 2 - spawnAreaTiles - _maxWalls;
-	int spacing = tilesAvailble / (_maxWalls - 1);
 	int offset = 2 + spawnAreaTiles * 0.5f;
+	int spacing = 0;
 
 	SetupTiles(tiles, worldBottomRightCorner, width, height);
-	SetupWalls(tiles, offset, spacing);
+
+	if (_maxWalls != 0)
+	{
+		if (_maxWalls > 1)
+		{
+			spacing = tilesAvailble / (_maxWalls - 1);
+		}
+		else
+		{
+			spacing = tilesAvailble / (_maxWalls + 1);
+		}
+
+		SetupWalls(tiles, offset, spacing);
+	}
+
 	SetupPlayerSpawnArea(player, tiles, offset);
 	SetupNPC_SpawnArea(npcs, tiles, offset, spacing);
 }
 
 void Level::SetupTiles(vector<vector<Tile*>>& tiles, int& worldBottomRightCorner, int width, int height)
 {
-	//tile size = ((width + height) * 0.5 * 4) / maxRowCol
-	// scale the world 4 times
 	_tileSize = ((width + height) * 0.5f * _worldScale) / _maxRowCol;
 	worldBottomRightCorner = _tileSize * _maxRowCol;
 
@@ -87,11 +106,11 @@ void Level::SetupTiles(vector<vector<Tile*>>& tiles, int& worldBottomRightCorner
 }
 void Level::SetupWalls(vector<vector<Tile*>>& tiles, int offset, int spacing)
 {
-	int tilesToWalls = (_maxRowCol - 2) * 0.9f;
 	bool bottomToTop = false;
 
 	for (int k = 0; k < _maxWalls; k++)
 	{
+		int tilesToWalls = (_maxRowCol - 2) * (rand() % MAX_SPAWN_WALL_HIGHT + MINIMUM_WALL_HIGHT) * 0.1f;
 		int i = 0;
 
 		if (k == 0)
@@ -193,7 +212,7 @@ void Level::SpawnPlayer(Player*& player, Tile*& tile)
 		SDL_Color colour = CreateColour(tile, true);
 
 		player = new Player();
-		player->Initialize(rectangle, colour);
+		player->Initialize(rectangle, colour, _interpolationTimer);
 		tile->SetOccupied(true);
 	}
 }
@@ -205,7 +224,7 @@ void Level::SpawnNPC(vector<NPC*>& npcs, Tile*& tile)
 		SDL_Color colour = CreateColour(tile, false);
 
 		npcs.push_back(new NPC());
-		npcs[npcs.size() - 1]->Initialize(rectangle, colour);
+		npcs[npcs.size() - 1]->Initialize(rectangle, colour, _interpolationTimer);
 		tile->SetOccupied(true);
 	}
 }

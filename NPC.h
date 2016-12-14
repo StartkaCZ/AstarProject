@@ -12,7 +12,7 @@ public:
 				NPC();
 				~NPC();
 
-	void		Initialize(SDL_Rect rectangle, SDL_Color colour) override;
+	void		Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolationTimer);
 
 	void		Update() override;
 	void		Update(int tileSize, int dt);
@@ -30,6 +30,7 @@ private:
 
 private:
 	float		_interpolationTimer;
+	float		_maxInterpolationTimer;
 
 	int			_initialX;
 	int			_initialY;
@@ -39,7 +40,5 @@ private:
 	vector<Tile*> _path;
 
 	bool		_pathComplete;
-
-	const float INTERPOLATION_TIMER = 1.0f;
 };
 #endif

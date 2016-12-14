@@ -163,17 +163,27 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 	_closedList.clear();
 	
 	Tile* start = _tiles[startX][startY];
-	start->getNodeData().insert(getNodeData(threadName, startX, startY, -1, -1, 0, 0, 0, true));
+	start->getNodeData()[threadName].SetIndex(startX, startY);
+	start->getNodeData()[threadName].g = 0;
+	start->getNodeData()[threadName].h = 0;
+	start->getNodeData()[threadName].f = 0;
+	start->getNodeData()[threadName].open = true;
+
 	
 	Tile* goal = _tiles[goalX][goalY];
-	goal->getNodeData().insert(getNodeData(threadName, goalX, goalY, -1, -1, 999999, 0, -1, false));
-	
+	goal->getNodeData()[threadName].SetIndex(goalX, goalY);
+
 	_openList.push(start);
 
 	DEBUG_MSG("Calculating A*...");
-	
+
 	while (start != goal)
 	{
+		if (_openList.empty())
+		{//If open list is empty then there is no solution
+			break;
+		}
+
 		//Take best node B from open list
 		Tile* b = _openList.top();
 
@@ -186,58 +196,46 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 		{//For each node N connected to B
 			Tile* n = connections[i];
 
-			//Assign F, G and H values for N
-			g = b->getNodeData()[threadName].g + 1;
-			h = abs(goalX - n->getNodeData()[threadName].indexX) + abs(goalY - n->getNodeData()[threadName].indexY);
-			f = g + h;
+			if (!n->getNodeData()[threadName].closed)
+			{
+				g = b->getNodeData()[threadName].g + 1;
 
-			if (n->getNodeData()[threadName].open)
-			{//If N is in open list then
-				n->getNodeData()[threadName].g = g;
-				n->getNodeData()[threadName].h = h;
-				n->getNodeData()[threadName].f = f;
-
-				if (n->getNodeData()[threadName].g < g)
-				{//If new Path is better then
-				 //Replace old entry for N with new one
-					b->getNodeData()[threadName].parentIndexX = n->getNodeData()[threadName].indexX;
-					b->getNodeData()[threadName].parentIndexY = n->getNodeData()[threadName].indexY;
+				if (n->getNodeData()[threadName].open)
+				{//If N is in open list then
+					if (g < n->getNodeData()[threadName].g)
+					{//If new Path is better then
+					 //Replace old entry for N with new one
+						n->getNodeData()[threadName].g = g;
+						n->getNodeData()[threadName].SetParentIndex(b->getNodeData()[threadName].indexX, b->getNodeData()[threadName].indexY);
+					}
 				}
-			}
-			else if (n->getNodeData()[threadName].closed)
-			{//If N is in closed list then
-				if (n->getNodeData()[threadName].g < g)
-				{//If new Path is better then
-				 //Replace old entry for N with new one
-					b->getNodeData()[threadName].parentIndexX = n->getNodeData()[threadName].indexX;
-					b->getNodeData()[threadName].parentIndexY = n->getNodeData()[threadName].indexY;
-				}
-			}
-			else
-			{//Else
-				n->getNodeData()[threadName].g = g;
-				n->getNodeData()[threadName].h = h;
-				n->getNodeData()[threadName].f = f;
+				else
+				{//Else
+					h = abs(goalX - n->getNodeData()[threadName].indexX) + abs(goalY - n->getNodeData()[threadName].indexY);
+					f = g + h;
 
-				//Add N to open list
-				n->getNodeData()[threadName].open = true;
-				_openList.push(n);
+					n->getNodeData()[threadName].g = g;
+					n->getNodeData()[threadName].h = h;
+					n->getNodeData()[threadName].f = f;
+
+					n->getNodeData()[threadName].SetParentIndex(b->getNodeData()[threadName].indexX, b->getNodeData()[threadName].indexY);
+
+					//Add N to open list
+					n->getNodeData()[threadName].open = true;
+					_openList.push(n);
+				}
 			}
 		}
 
-		if (_openList.empty())
-		{//If open list is empty then there is no solution
-			break;
-		}
-		else if (b == goal)
+		
+		if (b == goal)
 		{//If b == Goal then solution found
 			path.push_back(b);
 			_closedList.push_back(b);
 
 			b->ChangeTile(Tile::Type::Path);
 
-			b->getNodeData()[threadName].parentIndexX = _openList.top()->getNodeData()[threadName].parentIndexX;
-			b->getNodeData()[threadName].parentIndexY = _openList.top()->getNodeData()[threadName].parentIndexY;
+			b->getNodeData()[threadName].SetParentIndex(_openList.top()->getNodeData()[threadName].parentIndexX, _openList.top()->getNodeData()[threadName].parentIndexY);
 
 			int parentX = b->getNodeData()[threadName].parentIndexX;
 			int parentY = b->getNodeData()[threadName].parentIndexY;
@@ -263,7 +261,7 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 		_closedList.push_back(b);
 		b->getNodeData()[threadName].open = false;
 		b->getNodeData()[threadName].closed = true;
-		b->ChangeTile(Tile::Type::ClosedList);
+		//b->ChangeTile(Tile::Type::ClosedList);
 	}
 	
 	while (_openList.size() != 0)
@@ -277,7 +275,7 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 
 	for (; begin != end; begin++)
 	{
-		(*begin)->getNodeData()[threadName] = Tile::NodeData();
+		(*begin)->getNodeData()[threadName].Restart();
 	}
 	
 	DEBUG_MSG("... A* Finished");
@@ -294,10 +292,12 @@ vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName
 	{
 		Tile* connection = _tiles[indexer][currentY];
 		
-		connection->getNodeData()[threadName].indexX = indexer;
-		connection->getNodeData()[threadName].indexY = currentY;
-		
-		//connection->getNodeData().insert(getNodeData(threadName, indexer, currentY, currentX, currentY, 0, 0, 0, false));
+		connection->getNodeData()[threadName].SetIndex(indexer, currentY);
+
+		if (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
+		{
+			connection->getNodeData()[threadName].SetIndex(indexer, currentY);
+		}
 
 		connections.push_back(connection);
 	}
@@ -307,10 +307,12 @@ vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName
 	{
 		Tile* connection = _tiles[indexer][currentY];
 
-		connection->getNodeData()[threadName].indexX = indexer;
-		connection->getNodeData()[threadName].indexY = currentY;
+		connection->getNodeData()[threadName].SetIndex(indexer, currentY);
 
-		//connection->getNodeData().insert(getNodeData(threadName, indexer, currentY, currentX, currentY, 0, 0, 0, false));
+		if (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
+		{
+			connection->getNodeData()[threadName].SetIndex(indexer, currentY);
+		}
 
 		connections.push_back(connection);
 	}
@@ -320,10 +322,12 @@ vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName
 	{
 		Tile* connection = _tiles[currentX][indexer];
 
-		connection->getNodeData()[threadName].indexX = currentX;
-		connection->getNodeData()[threadName].indexY = indexer;
+		connection->getNodeData()[threadName].SetIndex(currentX, indexer);
 
-		//connection->getNodeData().insert(getNodeData(threadName, currentX, indexer, currentX, currentY, 0, 0, 0, false));
+		if (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
+		{
+			connection->getNodeData()[threadName].SetIndex(currentX, indexer);
+		}
 
 		connections.push_back(connection);
 	}
@@ -333,24 +337,17 @@ vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName
 	{
 		Tile* connection = _tiles[currentX][indexer];
 
-		connection->getNodeData()[threadName].indexX = currentX;
-		connection->getNodeData()[threadName].indexY = indexer;
+		connection->getNodeData()[threadName].SetIndex(currentX, indexer);
 
-		//connection->getNodeData().insert(getNodeData(threadName, currentX, indexer, currentX, currentY, 0, 0, 0, false));
+		if (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
+		{
+			connection->getNodeData()[threadName].SetIndex(currentX, indexer);
+		}
 
 		connections.push_back(connection);
 	}
 
 	return connections;
-}
-
-pair<string, Tile::NodeData> Grid::getNodeData(string threadName, int iX, int iY, int piX, int piY, float g, float h, float f, bool c)
-{
-	Tile::NodeData nodeData = Tile::NodeData(iX, iY, piX, piY, g, h, f, c);
-
-	pair<string, Tile::NodeData> pairNodeData = pair<string, Tile::NodeData>(threadName, nodeData);
-	
-	return pairNodeData;
 }
 
 vector<vector<Tile*>>& Grid::getTiles()

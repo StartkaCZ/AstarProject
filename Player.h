@@ -13,7 +13,7 @@ public:
 				Player();
 				~Player();
 
-	void		Initialize(SDL_Rect rectangle, SDL_Color colour) override;
+	void		Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolationTimer);
 
 	void		Update() override;
 	void		Update(vector<vector<Tile*>>& tiles, int tileSize, int dt);
@@ -28,13 +28,13 @@ private:
 
 private:
 	Direction	_lastDirectionMoved;
+
 	float		_wonderTimer;
+	float		_maxWonderTimer;
 
 	int			_initialX;
 	int			_initialY;
 	int			_goalX;
 	int			_goalY;
-
-	const float WONDER_TIMER = 1.0f;
 };
 #endif

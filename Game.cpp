@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "LTimer.h"
+#include "ConstHolder.h"
 
 using namespace std;
 
@@ -16,11 +17,9 @@ Game::Game()
 	: _running(false)
 	, _player(nullptr)
 	, _camera(nullptr)
-	, _Grid(nullptr)
 	, _data(nullptr)
 	, _threads(vector<SDL_Thread*>())
 	, _npcs(vector<NPC*>())
-	, _jobs(queue<Job*>())
 	, _threadJobDoneLog(new map<string, int>())
 {
 }
@@ -42,6 +41,9 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 
 		SDL_Rect cameraRectangle = SDL_Rect();
 		int worldBottomRightCorner;
+
+		_threadIt = true;
+		_hasThreaded = false;
 		
 		cameraRectangle.x = 0;
 		cameraRectangle.y = 0;
@@ -94,19 +96,20 @@ bool Game::SetupSDL(const char* title, int xpos, int ypos, int width, int height
 }
 void Game::CreateWorld(int& worldBottomRightCorner)
 {
-	_Grid = new Grid();
+	_data = new Data();
+	_data->grid = new Grid();
 
 	_level = new Level(_currentLevel);
-	_level->Initialize(_player, _npcs, _Grid->getTiles(), worldBottomRightCorner, 600, 600);
+	_level->Initialize(_player, _npcs, _data->grid->getTiles(), worldBottomRightCorner, 600, 600);
 
 	_npcs.shrink_to_fit();
 
-	_data = new Data(_Grid, _jobs, _level->getTileSize());
+	_data->tileSize =_level->getTileSize();
 
 	_threadsFinished = 0;
 	_canWork = SDL_TRUE;
 	
-	for (int i = 0; i < 1; i++)
+	for (int i = 0; i < MAX_THREADS_TO_RUN; i++)
 	{
 		std::ostringstream oss;
 		oss << i;
@@ -128,15 +131,15 @@ void Game::CreateWorld(int& worldBottomRightCorner)
 
 	for (int i = 0; i < _npcs.size(); i++)
 	{
-		//_jobs.push(getJob(i));
+		_data->jobs.push(getJob(i));
 
-		_npcs[i]->SetPath(
+		/*_npcs[i]->SetPath(
 			_Grid->CalculateAstar(_player->getRectangle().x,
 				_player->getRectangle().y,
 				_npcs[i]->getRectangle().x,
 				_npcs[i]->getRectangle().y,
 				_level->getTileSize(),
-				"Test"));
+				"Test"));*/
 	}
 }
 
@@ -144,7 +147,7 @@ void Game::Render()
 {
 	SDL_RenderClear(_renderer);
 	
-	_Grid->Render(_renderer, _camera->getRectangle(), _level->getTileSize());
+	_data->grid->Render(_renderer, _camera->getRectangle(), _level->getTileSize());
 	
 
 	for (int i = 0; i < _npcs.size(); i++)
@@ -198,7 +201,7 @@ int Game::Worker(void* ptr)
 
 	while (_canWork)
 	{
-		/*if (logger->data->jobs.size() > 0 && _canWork)
+		if (logger->data->jobs.size() > 0 && _canWork)
 		{
 			Job* job = nullptr;
 
@@ -226,7 +229,7 @@ int Game::Worker(void* ptr)
 				
 				delete job;
 			}
-		}*/
+		}
 	}
 
 	while (SDL_LockMutex(_mutex) != 0)
@@ -330,7 +333,7 @@ void Game::NewLevel(int level)
 
 	_threads.clear();
 
-	while (_threadsFinished < 8)
+	while (_threadsFinished < MAX_THREADS_TO_RUN)
 	{
 		
 	}
@@ -350,8 +353,8 @@ void Game::NewLevel(int level)
 		_currentLevel = level;
 	}
 
-	_Grid->Destroy();
-	delete _Grid;
+	_data->grid->Destroy();
+	delete _data->grid;
 
 	delete _level;
 	_level = nullptr;
@@ -360,9 +363,9 @@ void Game::NewLevel(int level)
 	delete _data;
 	_data = nullptr;
 
-	while (_jobs.size() > 0)
+	while (_data->jobs.size() > 0)
 	{
-		_jobs.pop();
+		_data->jobs.pop();
 	}
 
 	for (int i = 0; i < _npcs.size(); i++)

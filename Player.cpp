@@ -11,7 +11,7 @@ Player::~Player()
 	DEBUG_MSG("Destructing Player");
 }
 
-void Player::Initialize(SDL_Rect rectangle, SDL_Color colour)
+void Player::Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolationTimer)
 {
 	_rectangle = rectangle;
 	_colour = colour;
@@ -21,6 +21,8 @@ void Player::Initialize(SDL_Rect rectangle, SDL_Color colour)
 
 	_goalX = _initialX;
 	_goalY = _initialY;
+
+	_maxWonderTimer = interpolationTimer;
 }
 
 void Player::Update()
@@ -29,7 +31,7 @@ void Player::Update()
 }
 void Player::Update(vector<vector<Tile*>>& tiles, int tileSize, int dt)
 {
-	if (_wonderTimer > WONDER_TIMER)
+	if (_wonderTimer > _maxWonderTimer)
 	{
 		_rectangle.x = _goalX;
 		_rectangle.y = _goalY;
@@ -45,7 +47,7 @@ void Player::Update(vector<vector<Tile*>>& tiles, int tileSize, int dt)
 }
 void Player::Interpolate()
 {
-	float scale = _wonderTimer / WONDER_TIMER;
+	float scale = _wonderTimer / _maxWonderTimer;
 
 	_rectangle.x = _initialX + (_goalX - _initialX) * scale;
 	_rectangle.y = _initialY + (_goalY - _initialY) * scale;

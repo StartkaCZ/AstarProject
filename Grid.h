@@ -54,7 +54,6 @@ public:
 	vector<vector<Tile*>>&		getTiles();
 
 	vector<Tile*>				getConnections(int currentX, int currentY, string threadName);
-	pair<string, Tile::NodeData> getNodeData(string threadName, int iX, int iY, int piX, int piY, float g, float h, float f, bool c);
 
 /*
 private:
