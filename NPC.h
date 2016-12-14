@@ -22,8 +22,10 @@ public:
 	void		CleanUp() override;
 
 	bool		IsPathComplete();
+	bool		HasReachedPlayer();
 
 private:
+	void		CheckForPath();
 	void		Move();
 
 	void		Interpolate();
@@ -36,9 +38,12 @@ private:
 	int			_initialY;
 	int			_goalX;
 	int			_goalY;
+	int			_initialPathSize;
 
 	vector<Tile*> _path;
 
 	bool		_pathComplete;
+	bool		_playerReached;
+	bool		_requestPath;
 };
 #endif

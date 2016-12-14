@@ -213,7 +213,7 @@ void Level::SpawnPlayer(Player*& player, Tile*& tile)
 
 		player = new Player();
 		player->Initialize(rectangle, colour, _interpolationTimer);
-		tile->SetOccupied(true);
+		//tile->SetOccupied(true);
 	}
 }
 void Level::SpawnNPC(vector<NPC*>& npcs, Tile*& tile)

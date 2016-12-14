@@ -8,19 +8,11 @@
 
 using namespace std;
 
-int Game::_threadsFinished = 0;
-SDL_bool Game::_canWork = SDL_TRUE;
-SDL_mutex* Game::_mutex = SDL_CreateMutex();
-SDL_semaphore* Game::_semaphore = SDL_CreateSemaphore(1);
-
 Game::Game() 
 	: _running(false)
 	, _player(nullptr)
 	, _camera(nullptr)
-	, _data(nullptr)
-	, _threads(vector<SDL_Thread*>())
 	, _npcs(vector<NPC*>())
-	, _threadJobDoneLog(new map<string, int>())
 {
 }
 
@@ -96,58 +88,30 @@ bool Game::SetupSDL(const char* title, int xpos, int ypos, int width, int height
 }
 void Game::CreateWorld(int& worldBottomRightCorner)
 {
-	_data = new Data();
-	_data->grid = new Grid();
+	_grid = new Grid();
 
 	_level = new Level(_currentLevel);
-	_level->Initialize(_player, _npcs, _data->grid->getTiles(), worldBottomRightCorner, 600, 600);
+	_level->Initialize(_player, _npcs, _grid->getTiles(), worldBottomRightCorner, 600, 600);
 
 	_npcs.shrink_to_fit();
 
-	_data->tileSize =_level->getTileSize();
-
-	_threadsFinished = 0;
-	_canWork = SDL_TRUE;
-	
-	for (int i = 0; i < MAX_THREADS_TO_RUN; i++)
-	{
-		std::ostringstream oss;
-		oss << i;
-
-		string threadName = "Worker" + oss.str();
-
-		std::pair<string, int> jobDoneLog = std::pair<string, int>(threadName, 0);
-		_threadJobDoneLog->insert(jobDoneLog);
-
-		Logger* logger = new Logger(_threadJobDoneLog);
-		logger->threadName = threadName;
-		logger->data = _data;
-
-
-		SDL_Thread* worker = SDL_CreateThread(Worker, threadName.c_str(), logger);
-		_threads.push_back(worker);
-	}
-
+	ThreadPool::Instance()->Setup(_grid, _level->getTileSize());
 
 	for (int i = 0; i < _npcs.size(); i++)
 	{
-		_data->jobs.push(getJob(i));
-
-		/*_npcs[i]->SetPath(
-			_Grid->CalculateAstar(_player->getRectangle().x,
-				_player->getRectangle().y,
-				_npcs[i]->getRectangle().x,
-				_npcs[i]->getRectangle().y,
-				_level->getTileSize(),
-				"Test"));*/
+		if(_npcs[i]->IsPathComplete())
+		{
+			ThreadPool::Instance()->setJob(_npcs[i], _player->getRectangle().x, _player->getRectangle().y);
+		}
 	}
+	
 }
 
 void Game::Render()
 {
 	SDL_RenderClear(_renderer);
 	
-	_data->grid->Render(_renderer, _camera->getRectangle(), _level->getTileSize());
+	_grid->Render(_renderer, _camera->getRectangle(), _level->getTileSize());
 	
 
 	for (int i = 0; i < _npcs.size(); i++)
@@ -167,16 +131,30 @@ void Game::Update()
 	unsigned int deltaTime = currentTime - _lastTime;//time since last update
 
 
-	//_player->Update(_Grid->getTiles(), _level->getTileSize(), deltaTime);
+	int timesPlayerReached = 0;
 
 	for (int i = 0; i < _npcs.size(); i++)
 	{
 		_npcs[i]->Update(_level->getTileSize(), deltaTime);
+
+		if (_npcs[i]->IsPathComplete())
+		{
+			ThreadPool::Instance()->setJob(_npcs[i], _player->getRectangle().x, _player->getRectangle().y);
+		}
+		else if (_npcs[i]->HasReachedPlayer())
+		{
+			timesPlayerReached++;
+		}
 	}
 
-	for (int i = 0; i < _npcs.size(); i++)
+	if (timesPlayerReached == 0)
 	{
-	//	_jobs.push(_npcs[i]);
+		_player->Update(_grid->getTiles(), _level->getTileSize(), deltaTime);
+	}
+
+	if (timesPlayerReached == _npcs.size())
+	{
+		NewLevel(-1);
 	}
 
 
@@ -184,66 +162,7 @@ void Game::Update()
 	_lastTime = currentTime;
 }
 
-Game::Job* Game::getJob(int i)
-{
-	Job* job = new Job();
 
-	job->_npc = _npcs[i];
-	job->playerX = _player->getRectangle().x;
-	job->playerY = _player->getRectangle().y;
-
-	return job;
-}
-
-int Game::Worker(void* ptr)
-{
-	Logger* logger = static_cast<Logger*>(ptr);
-
-	while (_canWork)
-	{
-		if (logger->data->jobs.size() > 0 && _canWork)
-		{
-			Job* job = nullptr;
-
-
-			SDL_SemWait(_semaphore);
-			if (logger->data->jobs.size() > 0)
-			{
-				logger->threadJobDoneCounter->at(logger->threadName)++;
-
-				job = logger->data->jobs.front();
-				logger->data->jobs.pop();
-			}
-			SDL_SemPost(_semaphore);
-
-
-			if (job != nullptr)
-			{
-				job->_npc->SetPath(
-					logger->data->grid->CalculateAstar(job->playerX, 
-													   job->playerY, 
-													   job->_npc->getRectangle().x, 
-													   job->_npc->getRectangle().y, 
-													   logger->data->tileSize,
-													   logger->threadName) );
-				
-				delete job;
-			}
-		}
-	}
-
-	while (SDL_LockMutex(_mutex) != 0)
-	{
-
-	}
-
-	_threadsFinished++;
-
-	SDL_UnlockMutex(_mutex);
-	DEBUG_MSG("FINISHED");
-
-	return 0;
-}
 
 void Game::HandleEvents()
 {
@@ -321,23 +240,7 @@ bool Game::IsRunning()
 
 void Game::NewLevel(int level)
 {
-	PrintThreadJobsDone();
-
-	SDL_UnlockMutex(_mutex);
-	_canWork = SDL_FALSE;
-
-	for (int i = 0; i < _threads.size(); i++)
-	{
-		SDL_DetachThread(_threads[i]);
-	}
-
-	_threads.clear();
-
-	while (_threadsFinished < MAX_THREADS_TO_RUN)
-	{
-		
-	}
-	DEBUG_MSG("ALL THREADS FINISHED");
+	FreeMemory();
 
 	if (level == -1)
 	{
@@ -353,27 +256,6 @@ void Game::NewLevel(int level)
 		_currentLevel = level;
 	}
 
-	_data->grid->Destroy();
-	delete _data->grid;
-
-	delete _level;
-	_level = nullptr;
-	delete _player;
-	_player = nullptr;
-	delete _data;
-	_data = nullptr;
-
-	while (_data->jobs.size() > 0)
-	{
-		_data->jobs.pop();
-	}
-
-	for (int i = 0; i < _npcs.size(); i++)
-	{
-		delete _npcs[i];
-	}
-	_npcs.clear();
-
 	int worldBottomRightCorner = 0;
 	CreateWorld(worldBottomRightCorner);
 	_camera->ReInitialize(worldBottomRightCorner);
@@ -381,7 +263,7 @@ void Game::NewLevel(int level)
 
 void Game::CleanUp()
 {
-	PrintThreadJobsDone();
+	FreeMemory();
 
 	DEBUG_MSG("Cleaning Up");
 	SDL_DestroyWindow(_window);
@@ -389,27 +271,23 @@ void Game::CleanUp()
 	SDL_Quit();
 }
 
-void Game::PrintThreadJobsDone()
+void Game::FreeMemory()
 {
-	for (int i = 0; i < _threadJobDoneLog->size(); i++)
+	ThreadPool::Instance()->Destroy();
+
+	_grid->Destroy();
+	delete _grid;
+	_grid = nullptr;
+
+	delete _level;
+	_level = nullptr;
+	delete _player;
+	_player = nullptr;
+
+
+	for (int i = 0; i < _npcs.size(); i++)
 	{
-		std::ostringstream oss;
-		oss << i;
-
-		string threadName = "Worker" + oss.str();
-
-		DEBUG_MSG(threadName);
-		DEBUG_MSG("Worked");
-		DEBUG_MSG(_threadJobDoneLog->at(threadName));
+		delete _npcs[i];
 	}
-
-	for (int i = 0; i < _threadJobDoneLog->size(); i++)
-	{
-		std::ostringstream oss;
-		oss << i;
-
-		string threadName = "Worker" + oss.str();
-
-		_threadJobDoneLog->at(threadName) = 0;
-	}
+	_npcs.clear();
 }

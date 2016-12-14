@@ -3,6 +3,9 @@
 NPC::NPC()
 	: _path(vector<Tile*>())
 	, _pathComplete(true)
+	, _requestPath(true)
+	, _playerReached(false)
+	, _initialPathSize(0)
 { 
 	
 }
@@ -33,24 +36,9 @@ void NPC::Update()
 
 void NPC::Update(int tileSize, int dt)
 {
-	if (_path.size() == 1)
-	{
-		_pathComplete = true;
-	}
-
 	if (_interpolationTimer > _maxInterpolationTimer)
 	{
-		if (!_pathComplete && !_path[1]->getOccupied())
-		{
-			_interpolationTimer = 0;
-
-			_rectangle.x = _goalX;
-			_rectangle.y = _goalY;
-
-			_path[0]->SetOccupied(false);
-			_path.erase(_path.begin());
-			Move();
-		}
+		CheckForPath();
 	}
 	else
 	{
@@ -58,12 +46,35 @@ void NPC::Update(int tileSize, int dt)
 		Interpolate();
 	}
 }
-void NPC::Interpolate()
+void NPC::CheckForPath()
 {
-	float scale = _interpolationTimer / _maxInterpolationTimer;
+	if (!_pathComplete && !_path[1]->getOccupied())
+	{
+		_interpolationTimer = 0;
 
-	_rectangle.x = _initialX + (_goalX - _initialX) * scale;
-	_rectangle.y = _initialY + (_goalY - _initialY) * scale;
+		_rectangle.x = _goalX;
+		_rectangle.y = _goalY;
+
+		_path[0]->SetOccupied(false);
+		_path.erase(_path.begin());
+
+		if (_path.size() == 1)
+		{
+			_playerReached = true;
+			_pathComplete = true;
+		}
+		else if (_path.size() < _initialPathSize * 0.5f)
+		{
+			_requestPath = true;
+			_initialPathSize = _path.size();
+		}
+
+		Move();
+	}
+	else if (_playerReached)
+	{
+		_path[0]->SetOccupied(false);
+	}
 }
 
 void NPC::Move()
@@ -80,13 +91,62 @@ void NPC::Move()
 	_path[0]->SetOccupied(true);
 }
 
+void NPC::Interpolate()
+{
+	float scale = _interpolationTimer / _maxInterpolationTimer;
+
+	_rectangle.x = _initialX + (_goalX - _initialX) * scale;
+	_rectangle.y = _initialY + (_goalY - _initialY) * scale;
+}
+
 void NPC::SetPath(vector<Tile*> newPath)
 {
 	if (newPath.size() > 0)
 	{
+		if (!_pathComplete)
+		{
+			Tile* currentTile = nullptr;
+
+			for (int i = 0; i < _path.size(); i++)
+			{
+				if (_path[i]->getOccupied())
+				{
+					currentTile = _path[i];
+					currentTile->SetOccupied(false);
+					break;
+				}
+			}
+
+			vector<Tile*>::iterator iterator = find(newPath.begin(), newPath.end(), currentTile);
+
+			if (iterator != newPath.end())
+			{
+				newPath.erase(newPath.begin(), iterator);
+			}
+		}
+
+		_initialPathSize = newPath.size();
 		_pathComplete = false;
 		_path = newPath;
+
+		Move();
 	}
+}
+
+bool NPC::IsPathComplete()
+{
+	if (_requestPath && !_playerReached)
+	{
+		_requestPath = false;
+		return true;
+	}
+
+	return false;
+}
+
+bool NPC::HasReachedPlayer()
+{
+	return _playerReached;
 }
 
 void NPC::CleanUp()

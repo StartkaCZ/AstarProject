@@ -233,7 +233,7 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 			path.push_back(b);
 			_closedList.push_back(b);
 
-			b->ChangeTile(Tile::Type::Path);
+			//b->ChangeTile(Tile::Type::Path);
 
 			b->getNodeData()[threadName].SetParentIndex(_openList.top()->getNodeData()[threadName].parentIndexX, _openList.top()->getNodeData()[threadName].parentIndexY);
 
@@ -244,7 +244,7 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 				Tile* step = _tiles[parentX][parentY];
 
 				path.push_back(step);
-				step->ChangeTile(Tile::Type::Path);
+				//step->ChangeTile(Tile::Type::Path);
 
 				
 				parentX = step->getNodeData()[threadName].parentIndexX;
