@@ -172,7 +172,7 @@ void ThreadPool::Destroy()
 
 	while (_threadsFinished < _threadJobDoneLog->size())
 	{
-
+		DEBUG_MSG(_threadsFinished - _threadJobDoneLog->size());
 	}
 	DEBUG_MSG("ALL THREADS FINISHED");
 

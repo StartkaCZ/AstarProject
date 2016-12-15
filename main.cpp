@@ -3,7 +3,6 @@
 #include <string>
 
 #include <SDL.h>
-#include <SDL_image.h>
 
 #include "LTimer.h"
 #include "Game.h"
@@ -13,6 +12,8 @@ using namespace std;
 
 const int SCREEN_FPS = 100;
 const int SCREEN_TICKS_PER_FRAME = 0;// 1000 / SCREEN_FPS;
+
+#undef main
 
 int main(int argc, char** argv)
 {

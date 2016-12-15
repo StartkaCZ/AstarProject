@@ -36,6 +36,7 @@ private:
 private:
 	float		_interpolationTimer;
 	float		_maxInterpolationTimer;
+	float		_stuckTimer;
 
 	int			_initialX;
 	int			_initialY;

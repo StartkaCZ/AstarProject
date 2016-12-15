@@ -15,101 +15,7 @@ Grid::~Grid()
 {
 	DEBUG_MSG("Destructing Grid");
 }
-/*
-void Grid::Optimize(int maxWalls)
-{
-	SetupWayPoints(maxWalls);
-	SetupRegions(maxWalls);
-}
 
-void Grid::SetupWayPoints(int maxWalls)
-{
-	int wayPointCount = maxWalls * 2;
-	int indexerX = 1;
-	bool bottomToTop = false;
-
-	while (_waypoints.size() < wayPointCount)
-	{
-		if (bottomToTop)
-		{
-			WallBottomToTop(indexerX, wayPointCount);
-			bottomToTop = true;
-		}
-		else
-		{
-			WallTopToBottom(indexerX, wayPointCount);
-			bottomToTop = false;
-		}
-	}
-}
-
-void Grid::WallBottomToTop(int indexerX, int wayPointCount)
-{
-	for (int i = indexerX; i < _tiles.size(); i++)
-	{
-		if (_tiles[i][1]->getType() == Tile::Type::Wall)
-		{
-			int indexerY = 1;
-
-			for (int j = 1; j < _tiles[i].size(); j++)
-			{
-				if (_tiles[i][j]->getType() == Tile::Type::Empty)
-				{
-					indexerY = j;
-					break;
-				}
-			}
-
-			int centerYspace = indexerY + (_tiles[i].size() - 1 - indexerY) * 0.5f;
-			int centerXspace = (i - indexerX) * 0.5f;
-
-			WayPoint* wayPoint = new WayPoint();
-			wayPoint->row = centerXspace;
-			wayPoint->col = centerYspace;
-
-			_waypoints.push_back(wayPoint);
-		}
-	}
-}
-void Grid::WallTopToBottom(int indexerX, int wayPointCount)
-{
-
-}
-
-void Grid::SetupRegions(int maxWalls)
-{
-	int startingIndex = 0;
-	int regions = maxWalls;
-
-	//From begining till the last wall
-	while (_regions.size() < regions)
-	{
-		Region* region = new Region();
-		region->fromIndexX = 0;
-
-		for (int i = startingIndex + 1; i < _tiles.size(); i++)
-		{
-			if (_tiles[i][1]->getType() == Tile::Type::Wall)
-			{
-				region->toIndexX = startingIndex = i;
-			}
-		}
-
-		region->containsPlayer = false;
-
-		_regions.push_back(region);
-	}
-
-	//Last Region
-	Region* region = new Region();
-
-	region->fromIndexX = startingIndex;
-	region->toIndexX = _tiles[0].size();
-	region->containsPlayer = false;
-
-	_regions.push_back(region);
-}
-*/
 void Grid::Update()
 {
 	
@@ -172,38 +78,6 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 	start->getNodeData()[threadName].f = 0;
 	start->getNodeData()[threadName].open = true;
 
-	//CHECK FOR THE CRITICAL SECTION
-	/*if (start->getNodeData().size() > 0)
-	{
-		if (start->getNodeData()[threadName].indexX != -1 || start->getNodeData()[threadName].indexY - 1)
-		{
-			for (int i = 0; i < start->getNodeData().size(); i++)
-			{
-				std::ostringstream oss;
-				oss << i;
-
-				if (start->getNodeData().find(oss.str()) != start->getNodeData().end())
-				{
-					if (threadName != oss.str())
-					{
-
-						bool equal = start->getNodeData()[threadName].indexX == start->getNodeData()[oss.str()].indexX &&
-							start->getNodeData()[threadName].indexY == start->getNodeData()[oss.str()].indexY;
-
-						assert(!equal);
-
-						if (equal)
-						{
-							DEBUG_MSG("BREACH DETECTED");
-						}
-					}
-				}
-			}
-		}
-	}*/
-	
-
-	
 	Tile* goal = _tiles[goalX][goalY];
 	goal->getNodeData()[threadName].SetIndex(goalX, goalY);
 

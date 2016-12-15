@@ -1,4 +1,4 @@
-#include <NPC.h>
+#include "NPC.h"
 
 NPC::NPC()
 	: _path(vector<Tile*>())
@@ -6,6 +6,7 @@ NPC::NPC()
 	, _requestPath(true)
 	, _playerReached(false)
 	, _initialPathSize(0)
+	, _stuckTimer(0)
 { 
 	
 }
@@ -43,6 +44,22 @@ void NPC::Update(int tileSize, int dt)
 	{
 		_interpolationTimer += dt / 1000.f;
 		Interpolate();
+	}
+
+	if (!_pathComplete && !_playerReached && !_requestPath)
+	{
+		_stuckTimer += dt / 1000.0f;
+
+		if (_stuckTimer > 1)
+		{
+			for (int i = 0; i < _path.size(); i++)
+			{
+				_path[i]->SetOccupied(false);
+			}
+
+			//_requestPath = true;
+			_stuckTimer = 0;
+		}
 	}
 }
 void NPC::CheckForPath()
@@ -89,6 +106,8 @@ void NPC::Move()
 	_initialY = _rectangle.y;
 
 	_path[0]->SetOccupied(true);
+
+	_stuckTimer = 0;
 }
 
 void NPC::Interpolate()
@@ -128,6 +147,7 @@ void NPC::SetPath(vector<Tile*> newPath)
 		_initialPathSize = newPath.size();
 		_pathComplete = false;
 		_path = newPath;
+		_stuckTimer = 0;
 
 		Move();
 	}
