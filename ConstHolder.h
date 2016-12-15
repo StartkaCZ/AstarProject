@@ -24,4 +24,4 @@ float const PLAYER_DELAY_TIMER = 1.0f;
 int const MAX_SPAWN_WALL_HIGHT = 4;
 int const MINIMUM_WALL_HIGHT = 6;
 
-int const MAX_THREADS_TO_RUN = 8;
+//int const MAX_THREADS_TO_RUN = 8;

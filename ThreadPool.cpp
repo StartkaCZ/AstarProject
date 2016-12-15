@@ -31,6 +31,7 @@ ThreadPool* ThreadPool::Instance()
 ThreadPool::ThreadPool()
 	: _threads(vector<SDL_Thread*>())
 	, _threadJobDoneLog(new map<string, int>())
+	, _jobs(queue<Job*>())
 {
 }
 
@@ -101,11 +102,11 @@ int ThreadPool::Worker(void* ptr)
 		{
 			job->_npc->SetPath(
 				ThreadPool::Instance()->getGrid()->CalculateAstar(job->playerX,
-																  job->playerY,
-																  job->_npc->GetGoalX(),
-																  job->_npc->GetGoalY(),
-																  ThreadPool::Instance()->getTileSize(),
-																  name));
+					job->playerY,
+					job->_npc->GetGoalX(),
+					job->_npc->GetGoalY(),
+					ThreadPool::Instance()->getTileSize(),
+					name));
 
 			delete job;
 			job = nullptr;

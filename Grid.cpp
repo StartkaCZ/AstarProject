@@ -1,5 +1,8 @@
 #include "Grid.h"
 
+#include <sstream>
+#include <assert.h>
+
 Grid::Grid()
 	//: _regions(vector<Region*>())
 	//, _waypoints(vector<WayPoint*>())
@@ -169,6 +172,37 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 	start->getNodeData()[threadName].f = 0;
 	start->getNodeData()[threadName].open = true;
 
+	//CHECK FOR THE CRITICAL SECTION
+	/*if (start->getNodeData().size() > 0)
+	{
+		if (start->getNodeData()[threadName].indexX != -1 || start->getNodeData()[threadName].indexY - 1)
+		{
+			for (int i = 0; i < start->getNodeData().size(); i++)
+			{
+				std::ostringstream oss;
+				oss << i;
+
+				if (start->getNodeData().find(oss.str()) != start->getNodeData().end())
+				{
+					if (threadName != oss.str())
+					{
+
+						bool equal = start->getNodeData()[threadName].indexX == start->getNodeData()[oss.str()].indexX &&
+							start->getNodeData()[threadName].indexY == start->getNodeData()[oss.str()].indexY;
+
+						assert(!equal);
+
+						if (equal)
+						{
+							DEBUG_MSG("BREACH DETECTED");
+						}
+					}
+				}
+			}
+		}
+	}*/
+	
+
 	
 	Tile* goal = _tiles[goalX][goalY];
 	goal->getNodeData()[threadName].SetIndex(goalX, goalY);
@@ -181,6 +215,7 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 	{
 		if (_openList.empty())
 		{//If open list is empty then there is no solution
+			DEBUG_MSG("No Solution");
 			break;
 		}
 
@@ -192,6 +227,16 @@ vector<Tile*> Grid::CalculateAstar(int goalX, int goalY, int startX, int startY,
 		int f = 0;
 
 		vector<Tile*> connections = getConnections(b->getNodeData()[threadName].indexX, b->getNodeData()[threadName].indexY, threadName);
+		for (int i = 0; i < connections.size(); i++)
+		{
+			Tile* n = connections[i];
+
+			while (n->getNodeData()[threadName].indexX == -1 || n->getNodeData()[threadName].indexY == -1)
+			{
+				connections = getConnections(b->getNodeData()[threadName].indexX, b->getNodeData()[threadName].indexY, threadName);
+			}
+		}
+		
 		for (int i = 0; i < connections.size(); i++)
 		{//For each node N connected to B
 			Tile* n = connections[i];
