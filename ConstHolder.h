@@ -19,6 +19,7 @@ int const LEVEL_3_MAX_WALLS = 18;
 float const LEVEL_3_MAX_INTERPOLATION_TIMER = 0.001f;
 
 float const SPAWN_AREA_TILE = 0.2f;
+float const PLAYER_DELAY_TIMER = 1.0f;
 
 int const MAX_SPAWN_WALL_HIGHT = 4;
 int const MINIMUM_WALL_HIGHT = 6;

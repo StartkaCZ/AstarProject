@@ -7,10 +7,11 @@
 
 #include "LTimer.h"
 #include "Game.h"
+#include "FPS_Counter.h"
 
 using namespace std;
 
-const int SCREEN_FPS = 60;
+const int SCREEN_FPS = 100;
 const int SCREEN_TICKS_PER_FRAME = 0;// 1000 / SCREEN_FPS;
 
 int main(int argc, char** argv)
@@ -25,9 +26,13 @@ int main(int argc, char** argv)
 	DEBUG_MSG("Game Loop Starting......");
 	LTimer capTimer;//to cap framerate
 
-	int frameNum = 0;
+
+	FPS_Counter::Instance()->fpsinit();
+
 	while (game->IsRunning())
 	{
+		FPS_Counter::Instance()->fpsthink();
+
 		capTimer.start();
 
 		game->HandleEvents();

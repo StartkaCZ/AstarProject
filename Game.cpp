@@ -5,6 +5,7 @@
 
 #include "LTimer.h"
 #include "ConstHolder.h"
+#include "FPS_Counter.h"
 
 using namespace std;
 
@@ -12,6 +13,8 @@ Game::Game()
 	: _running(false)
 	, _player(nullptr)
 	, _camera(nullptr)
+	, _threadIt(true)
+	, _fpsTimer(0)
 	, _npcs(vector<NPC*>())
 {
 }
@@ -34,8 +37,7 @@ bool Game::Initialize(const char* title, int xpos, int ypos, int width, int heig
 		SDL_Rect cameraRectangle = SDL_Rect();
 		int worldBottomRightCorner;
 
-		_threadIt = true;
-		_hasThreaded = false;
+		_hasThreaded = _threadIt;
 		
 		cameraRectangle.x = 0;
 		cameraRectangle.y = 0;
@@ -95,16 +97,20 @@ void Game::CreateWorld(int& worldBottomRightCorner)
 
 	_npcs.shrink_to_fit();
 
-	ThreadPool::Instance()->Setup(_grid, _level->getTileSize());
-
-	for (int i = 0; i < _npcs.size(); i++)
+	if (_hasThreaded)
 	{
-		if(_npcs[i]->IsPathComplete())
+		ThreadPool::Instance()->Setup(_grid, _level->getTileSize());
+
+		/*for (int i = 0; i < _npcs.size(); i++)
 		{
-			ThreadPool::Instance()->setJob(_npcs[i], _player->getRectangle().x, _player->getRectangle().y);
-		}
+			if (_npcs[i]->IsPathComplete())
+			{
+				ThreadPool::Instance()->setJob(_npcs[i], _player->getRectangle().x, _player->getRectangle().y);
+			}
+		}*/
 	}
-	
+
+	PrintFPS();
 }
 
 void Game::Render()
@@ -139,7 +145,19 @@ void Game::Update()
 
 		if (_npcs[i]->IsPathComplete())
 		{
-			ThreadPool::Instance()->setJob(_npcs[i], _player->getRectangle().x, _player->getRectangle().y);
+			if (_hasThreaded)
+			{
+				ThreadPool::Instance()->setJob(_npcs[i], _player->getRectangle().x, _player->getRectangle().y);
+			}
+			else
+			{
+				_npcs[i]->SetPath(_grid->CalculateAstar(_player->getRectangle().x,
+														_player->getRectangle().y,
+														_npcs[i]->GetGoalX(),
+														_npcs[i]->GetGoalY(),
+														_level->getTileSize(),
+														"-1"));
+			}
 		}
 		else if (_npcs[i]->HasReachedPlayer())
 		{
@@ -147,7 +165,10 @@ void Game::Update()
 		}
 	}
 
-	if (timesPlayerReached == 0)
+	int distance = abs(_npcs[0]->getRectangle().x - _player->getRectangle().x) + abs(_npcs[0]->getRectangle().y - _player->getRectangle().y);
+	distance /= _level->getTileSize();
+
+	if (timesPlayerReached == 0 && distance > 6)
 	{
 		_player->Update(_grid->getTiles(), _level->getTileSize(), deltaTime);
 	}
@@ -157,11 +178,23 @@ void Game::Update()
 		NewLevel(-1);
 	}
 
+	PrintFPSTimer(deltaTime);
 
 	//save the curent time for next frame
 	_lastTime = currentTime;
 }
-
+void Game::PrintFPSTimer(int dt)
+{
+	if (_fpsTimer > 1)
+	{
+		PrintFPS();
+		_fpsTimer = 0;
+	}
+	else
+	{
+		_fpsTimer += dt / 1000.0f;
+	}
+}
 
 
 void Game::HandleEvents()
@@ -225,6 +258,15 @@ void Game::HandleEvents()
 					NewLevel(-1);
 					break;
 
+				case SDLK_q:
+					_threadIt = false;
+					DEBUG_MSG("DO NOT THREAD IT NEXT LEVEL");
+					break;
+				case SDLK_e:
+					_threadIt = true;
+					DEBUG_MSG("DO THREAD IT NEXT LEVEL");
+					break;
+
 				default:
 					//SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
 					break;
@@ -256,6 +298,10 @@ void Game::NewLevel(int level)
 		_currentLevel = level;
 	}
 
+	DEBUG_MSG("THREAD IT?");
+	DEBUG_MSG(_threadIt);
+	_hasThreaded = _threadIt;
+
 	int worldBottomRightCorner = 0;
 	CreateWorld(worldBottomRightCorner);
 	_camera->ReInitialize(worldBottomRightCorner);
@@ -271,9 +317,22 @@ void Game::CleanUp()
 	SDL_Quit();
 }
 
+void Game::PrintFPS()
+{
+	DEBUG_MSG("FPS: Average, Highest, Lowest");
+	DEBUG_MSG(FPS_Counter::Instance()->getFramesPerSecond());
+	DEBUG_MSG(FPS_Counter::Instance()->getHighestFrame());
+	DEBUG_MSG(FPS_Counter::Instance()->getLowestFrame());
+}
+
 void Game::FreeMemory()
 {
-	ThreadPool::Instance()->Destroy();
+	PrintFPS();
+
+	if (_hasThreaded)
+	{
+		ThreadPool::Instance()->Destroy();
+	}
 
 	_grid->Destroy();
 	delete _grid;

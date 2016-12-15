@@ -13,7 +13,7 @@ public:
 				Player();
 				~Player();
 
-	void		Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolationTimer);
+	void		Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolationTimer, float delayTimer);
 
 	void		Update() override;
 	void		Update(vector<vector<Tile*>>& tiles, int tileSize, int dt);
@@ -32,6 +32,9 @@ private:
 	float		_wonderTimer;
 	float		_maxWonderTimer;
 
+	float		_delayTimer;
+	float		_maxDelayTimer;
+	
 	int			_initialX;
 	int			_initialY;
 	int			_goalX;

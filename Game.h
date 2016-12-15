@@ -36,6 +36,8 @@ private:
 	void					NewLevel(int level);
 
 	void					FreeMemory();
+	void					PrintFPS();
+	void					PrintFPSTimer(int dt);
 
 private:
 	bool					_running;
@@ -50,6 +52,7 @@ private:
 
 	vector<NPC*>			_npcs;
 
+	float					_fpsTimer;
 	unsigned int			_lastTime;//time of last update;
 	int						_currentLevel;
 	bool					_threadIt;

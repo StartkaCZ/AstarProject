@@ -2,6 +2,7 @@
 
 Player::Player()
 	: _wonderTimer(0)
+	, _delayTimer(0)
 {
 	
 }
@@ -11,10 +12,9 @@ Player::~Player()
 	DEBUG_MSG("Destructing Player");
 }
 
-void Player::Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolationTimer)
+void Player::Initialize(SDL_Rect rectangle, SDL_Color colour, float wonderTimer, float delayTimer)
 {
-	_rectangle = rectangle;
-	_colour = colour;
+	GameObject::Initialize(rectangle, colour);
 
 	_initialX = _rectangle.x;
 	_initialY = _rectangle.y;
@@ -22,7 +22,8 @@ void Player::Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolatio
 	_goalX = _initialX;
 	_goalY = _initialY;
 
-	_maxWonderTimer = interpolationTimer;
+	_maxWonderTimer = wonderTimer;
+	_maxDelayTimer = delayTimer;
 }
 
 void Player::Update()
@@ -31,26 +32,39 @@ void Player::Update()
 }
 void Player::Update(vector<vector<Tile*>>& tiles, int tileSize, int dt)
 {
-	if (_wonderTimer > _maxWonderTimer)
+	if (_delayTimer > _maxDelayTimer)
 	{
-		_rectangle.x = _goalX;
-		_rectangle.y = _goalY;
-
-		Wonder(tiles, tileSize);
-		_wonderTimer = 0;
+		if (_wonderTimer > _maxWonderTimer)
+		{
+			Wonder(tiles, tileSize);
+			_wonderTimer = 0;
+			_delayTimer = 0;
+		}
+		else
+		{
+			_wonderTimer += dt / 1000.f;
+			Interpolate();
+		}
 	}
 	else
 	{
-		_wonderTimer += dt / 1000.f;
-		Interpolate();
+		_delayTimer += dt / 1000.f;
 	}
 }
 void Player::Interpolate()
 {
 	float scale = _wonderTimer / _maxWonderTimer;
 
-	_rectangle.x = _initialX + (_goalX - _initialX) * scale;
-	_rectangle.y = _initialY + (_goalY - _initialY) * scale;
+	if (scale > 1)
+	{
+		_rectangle.x = _goalX;
+		_rectangle.y = _goalY;
+	}
+	else
+	{
+		_rectangle.x = _initialX + (_goalX - _initialX) * scale;
+		_rectangle.y = _initialY + (_goalY - _initialY) * scale;
+	}
 }
 
 void Player::Wonder(vector<vector<Tile*>>& tiles, int tileSize)

@@ -3,6 +3,7 @@
 #include "ConstHolder.h"
 
 #include <sstream>
+#include <thread>
 
 
 ThreadPool *ThreadPool::_instance = nullptr;
@@ -11,7 +12,7 @@ int ThreadPool::_threadsFinished = 0;
 SDL_bool ThreadPool::_canWork = SDL_TRUE;
 SDL_mutex* ThreadPool::_jobMutex = SDL_CreateMutex();
 SDL_mutex* ThreadPool::_countMutex = SDL_CreateMutex();
-SDL_semaphore* ThreadPool::_semaphore = SDL_CreateSemaphore(0);
+SDL_semaphore* ThreadPool::_semaphore = nullptr;
 
 
 /**Singleton instance*/
@@ -46,9 +47,12 @@ void ThreadPool::Setup(Grid*& grid, int tileSize)
 	_grid = grid;
 	_tileSize = tileSize;
 
+	_semaphore = SDL_CreateSemaphore(0);
+
 	SDL_UnlockMutex(_jobMutex);
 
-	for (int i = 0; i < MAX_THREADS_TO_RUN; i++)
+	int maxThreads = thread::hardware_concurrency() - 1;
+	for (int i = 0; i < maxThreads; i++)
 	{
 		std::ostringstream oss;
 		oss << i;
@@ -97,13 +101,14 @@ int ThreadPool::Worker(void* ptr)
 		{
 			job->_npc->SetPath(
 				ThreadPool::Instance()->getGrid()->CalculateAstar(job->playerX,
-					job->playerY,
-					job->_npc->getRectangle().x,
-					job->_npc->getRectangle().y,
-					ThreadPool::Instance()->getTileSize(),
-					name));
+																  job->playerY,
+																  job->_npc->GetGoalX(),
+																  job->_npc->GetGoalY(),
+																  ThreadPool::Instance()->getTileSize(),
+																  name));
 
 			delete job;
+			job = nullptr;
 		}
 	}
 
@@ -147,7 +152,7 @@ void ThreadPool::Destroy()
 	_canWork = SDL_FALSE;
 
 
-	int postsToDo = MAX_THREADS_TO_RUN - _jobs.size();
+	int postsToDo = _threadJobDoneLog->size() - _jobs.size();
 	if (postsToDo > 0)
 	{
 		for (int i = 0; i < postsToDo; i++)
@@ -164,11 +169,13 @@ void ThreadPool::Destroy()
 
 	_threads.clear();
 
-	while (_threadsFinished < MAX_THREADS_TO_RUN)
+	while (_threadsFinished < _threadJobDoneLog->size())
 	{
 
 	}
 	DEBUG_MSG("ALL THREADS FINISHED");
+
+	SDL_DestroySemaphore(_semaphore);
 
 	while (_jobs.size() > 0)
 	{

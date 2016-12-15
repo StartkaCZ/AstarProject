@@ -17,8 +17,7 @@ NPC::~NPC()
 
 void NPC::Initialize(SDL_Rect rectangle, SDL_Color colour, float interpolationTimer)
 {
-	_rectangle = rectangle;
-	_colour = colour;
+	GameObject::Initialize(rectangle, colour);
 
 	_initialX = _rectangle.x;
 	_initialY = _rectangle.y;
@@ -71,7 +70,8 @@ void NPC::CheckForPath()
 
 		Move();
 	}
-	else if (_playerReached)
+	
+	if (_playerReached)
 	{
 		_path[0]->SetOccupied(false);
 	}
@@ -131,6 +131,10 @@ void NPC::SetPath(vector<Tile*> newPath)
 
 		Move();
 	}
+	else
+	{
+		_requestPath = true;
+	}
 }
 
 bool NPC::IsPathComplete()
@@ -144,9 +148,18 @@ bool NPC::IsPathComplete()
 	return false;
 }
 
-bool NPC::HasReachedPlayer()
+bool NPC::HasReachedPlayer() const
 {
 	return _playerReached;
+}
+
+int	NPC::GetGoalX() const
+{
+	return _goalX;
+}
+int	NPC::GetGoalY() const
+{
+	return _goalY;
 }
 
 void NPC::CleanUp()

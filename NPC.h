@@ -22,7 +22,10 @@ public:
 	void		CleanUp() override;
 
 	bool		IsPathComplete();
-	bool		HasReachedPlayer();
+	bool		HasReachedPlayer() const;
+
+	int			GetGoalX() const;
+	int			GetGoalY() const;
 
 private:
 	void		CheckForPath();

@@ -294,7 +294,7 @@ vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName
 		
 		connection->getNodeData()[threadName].SetIndex(indexer, currentY);
 
-		if (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
+		while (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
 		{
 			connection->getNodeData()[threadName].SetIndex(indexer, currentY);
 		}
@@ -309,7 +309,7 @@ vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName
 
 		connection->getNodeData()[threadName].SetIndex(indexer, currentY);
 
-		if (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
+		while (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
 		{
 			connection->getNodeData()[threadName].SetIndex(indexer, currentY);
 		}
@@ -324,7 +324,7 @@ vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName
 
 		connection->getNodeData()[threadName].SetIndex(currentX, indexer);
 
-		if (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
+		while (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
 		{
 			connection->getNodeData()[threadName].SetIndex(currentX, indexer);
 		}
@@ -339,7 +339,7 @@ vector<Tile*> Grid::getConnections(int currentX, int currentY, string threadName
 
 		connection->getNodeData()[threadName].SetIndex(currentX, indexer);
 
-		if (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
+		while (connection->getNodeData()[threadName].indexX == -1 || connection->getNodeData()[threadName].indexY == -1)
 		{
 			connection->getNodeData()[threadName].SetIndex(currentX, indexer);
 		}

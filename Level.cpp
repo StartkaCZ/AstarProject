@@ -212,7 +212,7 @@ void Level::SpawnPlayer(Player*& player, Tile*& tile)
 		SDL_Color colour = CreateColour(tile, true);
 
 		player = new Player();
-		player->Initialize(rectangle, colour, _interpolationTimer);
+		player->Initialize(rectangle, colour, _interpolationTimer, PLAYER_DELAY_TIMER);
 		//tile->SetOccupied(true);
 	}
 }

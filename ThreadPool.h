@@ -29,19 +29,6 @@ private:
 		int playerY;
 	};
 
-	struct Logger
-	{
-		Logger(map<string, int>*& l)
-			: threadJobDoneCounter(l)
-		{
-
-		}
-
-		map<string, int>*		threadJobDoneCounter;
-		string					threadName;
-	};
-
-
 public:
 							ThreadPool();
 							~ThreadPool();
